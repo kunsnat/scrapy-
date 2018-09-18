@@ -3,12 +3,10 @@
 # Define here the models for your scraped items
 #
 # See documentation in:
-# http://doc.scrapy.org/en/latest/topics/items.html
-
-import scrapy
+# https://doc.scrapy.org/en/latest/topics/items.html
 
 
-class QichachaItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+from scrapy.item import Item, Field
+
+class DemoItem(Item):
+    title = Field()

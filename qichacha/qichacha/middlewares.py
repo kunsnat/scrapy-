@@ -83,11 +83,11 @@ class JSPageMiddleware(object):
             spider. browser.get(request.url)
             import time
             time.sleep(3)
-            print "访问：{0}".format(request.url)
+            print "访问：{0}".format(request.url) # 数组请求, 多次访问, 尝试不关闭 chrome
             #spider.browser.find_element_by_xpath('//div[@class="bottom hide"]/a[@class="link"]').click()
 
-            spider.browser.find_element_by_xpath('//div[@class="form-group has-feedback m-l-lg m-r-lg m-t-xs m-b-none"]/input[@name="nameNormal"]').send_keys("你自己的账号")
-            spider.browser.find_element_by_xpath('//div[@class="form-group has-feedback m-l-lg m-r-lg m-t-xs m-b-none"]/input[@name="pwdNormal"]').send_keys("你自己的密码")
-            time.sleep(9)
+            # spider.browser.find_element_by_xpath('//div[@class="form-group has-feedback m-l-lg m-r-lg m-t-xs m-b-none"]/input[@name="nameNormal"]').send_keys("18094202229")
+            # spider.browser.find_element_by_xpath('//div[@class="form-group has-feedback m-l-lg m-r-lg m-t-xs m-b-none"]/input[@name="pwdNormal"]').send_keys("1234567890")
+            # time.sleep(30)
             #spider.browser.find_element_by_xpath('//div[@class="m-l-lg m-r-lg m-t-lg"]/button[@class="btn  btn-primary     m-t-n-xs btn-block btn-lg font-15"]').click()
             return HtmlResponse(url=spider.browser.current_url,body=spider.browser.page_source,encoding="utf-8")
