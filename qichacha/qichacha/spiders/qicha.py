@@ -12,7 +12,7 @@ class QichaSpider(scrapy.Spider):
     name = "qicha"
     allowed_domains = ["http://www.qichacha.com/"]
     start_urls = ['http://www.qichacha.com/',
-                  'https://www.qichacha.com/search?key=四川科技',
+                  # 'https://www.qichacha.com/search?key=四川科技',
                   # 'https://www.qichacha.com/search?key=%E5%9B%9B%E5%B7%9D%E7%A7%91%E6%8A%80'
                   ]
 
@@ -33,4 +33,12 @@ class QichaSpider(scrapy.Spider):
           print "from parse end ---> "
           com = DemoItem()
           yield com
+
+
+    def start_requests(self):  # 循环搜索  创建多个地址 以供查询 优先start_urls 两者选一
+        print 'start url'
+        for number in range(0, 2):
+            print number
+            value = 'https://www.qichacha.com/search?key=' + str(number)
+            yield self.make_requests_from_url(value)
 
