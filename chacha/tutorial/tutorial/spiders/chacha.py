@@ -12,6 +12,8 @@ from tutorial.items import TutorialItem
 import urlparse
 import json
 import time
+import urllib
+from openpyxl import Workbook
 
 class QichaSpider(scrapy.Spider):
     name = "chacha"
@@ -26,6 +28,10 @@ class QichaSpider(scrapy.Spider):
 
         self.hyperBrowser = webdriver.Chrome(executable_path="C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe")
         self.hyperBrowser.implicitly_wait(10)
+
+        self.wb = Workbook()
+        self.ws = self.wb.active
+        self.ws.append(['标题', '进度', '类型', '适用地区', '发文时间', '扶持金额', '有效期限', '适用行业', '政策分类', '申报详情', '附件列表'])  # 设置表头
 
         super(QichaSpider, self).__init__()
 
@@ -127,18 +133,23 @@ class QichaSpider(scrapy.Spider):
 
             #申报
             content = leftContent[0].xpath('.//div[@class="detail-content"]').extract()
-            com['content'] = self.decodeStr(content).rstrip().lstrip()
+            # com['content'] = self.decodeStr(content).rstrip().lstrip()
 
             #时间轨迹leftContent[1]
             #附件leftContent[2]
 
             urls = leftContent[2].xpath('.//li[@class="ev-download m-b-sm"]')
+            urlList = []
             for url in urls:
                 fileUrl = 'http:' + str(url.xpath('@data-href')[0].extract())
-                com['file_urls'] = [fileUrl]
                 name = url.xpath('.//a/text()')[0].extract()
-                break
+                if fileUrl.find('.pdf') != -1:
+                    urllib.urlretrieve(fileUrl, filename=name)
+                else:
+                    urlList.append(fileUrl)
+                # break
 
+            com['file_urls'] = urlList
             # com['file_urls'] = ['http://cdn.chacha.top/upload/announcement/201809/2018年成都市新经济梯度培育企业申报书.docx']
 
             yield com
