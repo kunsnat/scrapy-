@@ -30,7 +30,9 @@ class QichaSpider(scrapy.Spider):
         self.hyperBrowser = webdriver.Chrome(executable_path="C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe")
         self.hyperBrowser.implicitly_wait(10)
 
-        self.location = 'D:/pydemo/qichacha/chacha/download/'
+        currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
+
+        self.location = 'D:/pydemo/qichacha/chacha/download/' + currentDayFile + '/'
 
 
         super(QichaSpider, self).__init__()
