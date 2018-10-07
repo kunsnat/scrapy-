@@ -5,25 +5,16 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
-from scrapy.pipelines.files import FilesPipeline
 import json
-import scrapy
-import os
-import urlparse
+from openpyxl import Workbook
 
-class TutorialPipeline(FilesPipeline):
+class TutorialPipeline(object):
 
-    def file_path(self, request, response=None, info=None):
-        parse_result = urlparse(request.url)
-        path = parse_result.path
-        basename = os.path.basename(path)
-        return basename
+    def __init__(self):
 
-
-    def get_media_requests(self, item,info):
-        print 'this is form get mdediso aaaa'
-        for url in item["file_urls"]:
-            yield scrapy.Request(url)
+        self.wb = Workbook()
+        self.ws = self.wb.active
+        self.ws.append(['标题', '进度', '类型', '适用地区', '发文时间', '扶持金额', '有效期限', '适用行业', '政策分类', '申报详情', '附件列表'])  # 设置表头
 
 
     def parseT(self, value):
@@ -32,8 +23,8 @@ class TutorialPipeline(FilesPipeline):
     def process_item(self, item, spider):
         test = [item['title'], item['progress'], item['type'], item['area'], item['updateTime'], item['money'], item['validTime'],
                 item['industry'], item['policyType'], '' ]
-        spider.ws.append(test)
-        spider.wb.save('chacha.xlsx')
+        self.ws.append(test)
+        self.wb.save(spider.location + 'chacha.xlsx')
 
         return item
 
