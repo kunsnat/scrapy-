@@ -127,41 +127,35 @@ class QichaSpider(scrapy.Spider):
             com['progress'] = self.decodeStr(titleLabel)
 
             infos = topDiv.xpath('p')   # 直接按照固定格式
-
             # 适用地区 发文时间
-            firsts = infos[0].xpath('span')
-            for firstSpan in firsts:
-                value = self.decodeStr(firstSpan.extract())
-                if value.find('适用地区') != -1:
-                    areaSpan = firstSpan.xpath('./text()')[0].extract()
-                    com['area'] = self.decodeStr(areaSpan).replace("适用地区", "").replace("：","").rstrip().lstrip() # 奇怪的分号
-                elif value.find('发文时间') != -1:
-                    updateTime = firstSpan.xpath('.//span/text()')[0].extract()
-                    com['updateTime'] = self.decodeStr(updateTime).replace("发文时间", "").replace("：","").rstrip().lstrip()
-                else:
-                    pass
-
             # 扶持金额  有效期
-            seconds = infos[1].xpath('span')
-            for secondSpan in seconds:
-                value = self.decodeStr(secondSpan.extract())
-                if value.find('扶持金额') != -1:
-                    moneySpan = secondSpan.xpath('.//span//span/text()')
-                    if len(moneySpan) > 0:
-                        money = moneySpan[0].extract()   #金额
-                        com['money'] = self.decodeStr(money).replace("扶持金额", "").replace("：","").rstrip().lstrip()
-                elif value.find('有效期限') != -1:
-                    validSpan = secondSpan.xpath('./text()')
-                    if len(validSpan) > 0:
-                        validTime = validSpan[0].extract()
-                        com['validTime'] = self.decodeStr(validTime).replace("有效期限", "").replace("：","").rstrip().lstrip()
-                else:
-                    pass
+            # 适用行业
+            for info in infos:
+                for infoSpan in info.xpath('span'):
+                    value = self.decodeStr(infoSpan.extract())
+                    if value.find('适用地区') != -1:
+                        areaSpan = infoSpan.xpath('./text()')[0].extract()
+                        com['area'] = self.decodeStr(areaSpan).replace("适用地区", "").replace("：","").rstrip().lstrip() # 奇怪的分号
+                    elif value.find('发文时间') != -1:
+                        updateTime = infoSpan.xpath('.//span/text()')[0].extract()
+                        com['updateTime'] = self.decodeStr(updateTime).replace("发文时间", "").replace("：","").rstrip().lstrip()
+                    elif value.find('扶持金额') != -1:
+                        moneySpan = infoSpan.xpath('.//span//span/text()')
+                        if len(moneySpan) > 0:
+                            money = moneySpan[0].extract()   #金额
+                            com['money'] = self.decodeStr(money).replace("扶持金额", "").replace("：","").rstrip().lstrip()
+                    elif value.find('有效期限') != -1:
+                        validSpan = infoSpan.xpath('./text()')
+                        if len(validSpan) > 0:
+                            validTime = validSpan[0].extract()
+                            com['validTime'] = self.decodeStr(validTime).replace("有效期限", "").replace("：","").rstrip().lstrip()
 
+                    elif value.find('行业') != -1:
+                        industry = infoSpan.xpath('.//span/text()')[0].extract()
+                        com['industry'] = self.decodeStr(industry).rstrip().lstrip()
+                    else:
+                        pass
 
-            #适用行业
-            industry = infos[2].xpath('.//span//span/text()')[0].extract()
-            com['industry'] = self.decodeStr(industry).rstrip().lstrip()
 
             #申报 内容详情
             leftContent = response.xpath('//div[@class="pull-left content-left policy-content-box bg-white m-b-md"]//div[@class="m-b-md"]')
@@ -209,45 +203,46 @@ class QichaSpider(scrapy.Spider):
 
             infos = topDiv.xpath('p')   # 直接按照固定格式
 
-            # ---------> 适用地区 发文时间  文号
+            # 适用地区 发文时间  文号
+            # 政策分类 扶持金额 有效期限
+            for info in infos:
+                for infoSpan in info.xpath('span'):
+                    value = self.decodeStr(infoSpan.extract())
 
-            areaSpan = infos[0].xpath('.//span')[0].xpath('./text()')[0].extract()
-            com['area'] = self.decodeStr(areaSpan).replace("适用地区", "").replace("：","").rstrip().lstrip() # 奇怪的分号
+                    if value.find('适用地区') != -1:
+                        areaSpan = infoSpan.xpath('./text()')[0].extract()
+                        com['area'] = self.decodeStr(areaSpan).replace("适用地区", "").replace("：","").rstrip().lstrip()
+                    elif value.find('行业') != -1:
+                        industry = infoSpan.xpath('.//span/text()')[0].extract()  #行业
+                        com['industry'] = self.decodeStr(industry).rstrip().lstrip()
+                    elif value.find('有效期限') != -1:
+                        validSpan = infoSpan.xpath('.//span/text()')
+                        if len(validSpan) > 0:
+                            validTime = validSpan[0].extract()
+                            com['validTime'] = self.decodeStr(validTime).replace("有效期限", "").replace("：","").rstrip().lstrip()
+                    elif value.find('扶持金额') != -1:
+                        moneySpan = infoSpan.xpath('.//span//span/text()')
+                        if len(moneySpan) > 0:
+                            money = moneySpan[0].extract()   #金额
+                            com['money'] = self.decodeStr(money).replace("扶持金额", "").replace("：","").rstrip().lstrip()
+                    elif value.find('发文时间') != -1:
+                        updateSpan = infoSpan.xpath('./text()')
+                        if len(updateSpan) > 0:
+                            updateTime = updateSpan[0].extract()
+                            com['updateTime'] = self.decodeStr(updateTime).replace("发文时间", "").replace("：","").rstrip().lstrip()
+                    elif value.find('政策分类') != -1:
+                        types = ''
+                        for type in infoSpan.xpath('span'):
+                            value = type.xpath('./text()')[0].extract()
+                            if types == '':
+                                types += str(self.decodeStr(value))
+                            else:
+                                types += ',' + str(self.decodeStr(value))
 
-            industry = infos[0].xpath('.//span//span/text()')[0].extract()  #行业
-            com['industry'] = self.decodeStr(industry).rstrip().lstrip()
+                        com['policyType'] = types
+                    else:
+                        pass
 
-            validSpan = infos[0].xpath('span')[2].xpath('.//span/text()')
-            if len(validSpan) > 0:
-                validTime = validSpan[0].extract()
-                com['validTime'] = self.decodeStr(validTime).replace("有效期限", "").replace("：","").rstrip().lstrip()
-
-            # ------>  政策分类 扶持金额 发文时间
-            seconds = infos[1].xpath('span')
-            for secondSpan in seconds:
-                value = self.decodeStr(secondSpan.extract())
-                if value.find('扶持金额') != -1:
-                    moneySpan = secondSpan.xpath('.//span//span/text()')
-                    if len(moneySpan) > 0:
-                        money = moneySpan[0].extract()   #金额
-                        com['money'] = self.decodeStr(money).replace("扶持金额", "").replace("：","").rstrip().lstrip()
-                elif value.find('发文时间') != -1:
-                    updateSpan = secondSpan.xpath('./text()')
-                    if len(updateSpan) > 0:
-                        updateTime = updateSpan[0].extract()
-                        com['updateTime'] = self.decodeStr(updateTime).replace("发文时间", "").replace("：","").rstrip().lstrip()
-                elif value.find('政策分类') != -1:
-                    types = ''
-                    for type in secondSpan.xpath('span'):
-                        value = type.xpath('./text()')[0].extract()
-                        if types == '':
-                            types += str(self.decodeStr(value))
-                        else:
-                            types += ',' + str(self.decodeStr(value))
-
-                    com['policyType'] = types
-                else:
-                    pass
 
             #申报 扶持详情
             leftContent = response.xpath('//div[@class="pull-left content-left policy-content-box bg-white m-b-md"]//div[@class="m-b-md"]')
@@ -297,42 +292,34 @@ class QichaSpider(scrapy.Spider):
 
             infos = topDiv.xpath('p')   # 直接按照固定格式
 
-            # ---------> 适用地区 发文时间 文号
-            # 适用地区 发文时间
-            firsts = infos[0].xpath('span')
-            for firstSpan in firsts:
-                value = self.decodeStr(firstSpan.extract())
-                if value.find('适用地区') != -1:
-                    areaSpan = firstSpan.xpath('./text()')[0].extract()
-                    com['area'] = self.decodeStr(areaSpan).replace("适用地区", "").replace("：","").rstrip().lstrip() # 奇怪的分号
-                elif value.find('发文时间') != -1:
-                    updateTime = firstSpan.xpath('./text()')[0].extract()
-                    com['updateTime'] = self.decodeStr(updateTime).replace("发文时间", "").replace("：","").rstrip().lstrip()
-                elif value.find('文号') != -1:
-                    number = firstSpan.xpath('./text()')[0].extract()
-                    com['number'] = self.decodeStr(number).replace("文号", "").replace("：","").rstrip().lstrip()
-                else:
-                    pass
+            # 适用地区 发文时间 文号
+            # 发文体系 有效时间
+            for info in infos:
+                for infoSpan in info.xpath('span'):
+                    value = self.decodeStr(infoSpan.extract())
+                    if value.find('适用地区') != -1:
+                        areaSpan = infoSpan.xpath('./text()')[0].extract()
+                        com['area'] = self.decodeStr(areaSpan).replace("适用地区", "").replace("：","").rstrip().lstrip()
+                    elif value.find('发文时间') != -1:
+                        updateTime = infoSpan.xpath('./text()')[0].extract()
+                        com['updateTime'] = self.decodeStr(updateTime).replace("发文时间", "").replace("：","").rstrip().lstrip()
+                    elif value.find('文号') != -1:
+                        number = infoSpan.xpath('./text()')[0].extract()
+                        com['number'] = self.decodeStr(number).replace("文号", "").replace("：","").rstrip().lstrip()
+                    elif value.find('发文体系') != -1:
+                        system = infoSpan.xpath('.//span/text()')
+                        if len(system) > 0:
+                            money = system[0].extract()
+                            com['system'] = self.decodeStr(money).replace("发文体系", "").replace("：","").rstrip().lstrip()
+                    elif value.find('有效期限') != -1:
+                        validSpan = infoSpan.xpath('./text()')
+                        if len(validSpan) > 0:
+                            validTime = validSpan[0].extract()
+                            com['validTime'] = self.decodeStr(validTime).replace("有效期限", "").replace("：","").rstrip().lstrip()
+                    else:
+                        pass
 
-
-            seconds = infos[1].xpath('span')
-            for secondSpan in seconds:
-                value = self.decodeStr(secondSpan.extract())
-                if value.find('发文体系') != -1:
-                    system = secondSpan.xpath('.//span/text()')
-                    if len(system) > 0:
-                        money = system[0].extract()
-                        com['system'] = self.decodeStr(money).replace("发文体系", "").replace("：","").rstrip().lstrip()
-                elif value.find('有效期限') != -1:
-                    validSpan = secondSpan.xpath('./text()')
-                    if len(validSpan) > 0:
-                        validTime = validSpan[0].extract()
-                        com['validTime'] = self.decodeStr(validTime).replace("有效期限", "").replace("：","").rstrip().lstrip()
-                else:
-                    pass
-
-            # ------>  政策原文
-
+            # 政策原文
             leftContent = response.xpath('//div[@class="pull-left content-left bg-white m-b-md"]//div[@class="m-b-md"]') #特殊的class
             for left in leftContent:
                 value = self.decodeStr(left.extract())
