@@ -136,6 +136,8 @@ class JSPageMiddleware(object):
                 spider.hyperBrowser.get(request.url)
                 print 'load hyper'
 
+                # time.sleep(1)
+
                 return HtmlResponse(url=spider.hyperBrowser.current_url,body=spider.hyperBrowser.page_source,encoding="utf-8")
 
             else:
@@ -144,10 +146,10 @@ class JSPageMiddleware(object):
 
                 print 'load main page and down refresh'
 
-                # for i in range(1, 100):
-                #     spider.browser.find_element_by_xpath("//body").send_keys(Keys.DOWN)
+                for i in range(1, 60): #
+                    spider.browser.find_element_by_xpath("//body").send_keys(Keys.DOWN)
 
-                time.sleep(1)
+                time.sleep(5)
 
                 return HtmlResponse(url=spider.browser.current_url,body=spider.browser.page_source,encoding="utf-8")
 

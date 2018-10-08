@@ -18,15 +18,16 @@ class TutorialPipeline(object):
         self.wb = Workbook()
         self.ws = self.wb.active
         self.name = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-        self.ws.append(['标题', '进度', '类型', '适用地区', '发文时间', '扶持金额', '有效期限', '适用行业', '政策分类', '申报详情', '附件列表'])  # 设置表头
+        self.ws.append(['标题', '发文体系', '文号', '序号', '进度', '类型', '适用地区', '发文时间', '扶持金额', '有效期限', '适用行业',
+                        '政策分类', '申报详情', '附件列表', '文章地址'])  # 设置表头
 
 
     def parseT(self, value):
                 return json.dumps(value).decode('unicode_escape')
 
     def process_item(self, item, spider):
-        test = [item['title'], item['progress'], item['type'], item['area'], item['updateTime'], item['money'], item['validTime'],
-                item['industry'], item['policyType'], item['content'] ]
+        test = [item['title'], item['system'], item['number'], item['index'], item['progress'], item['type'], item['area'], item['updateTime'], item['money'], item['validTime'],
+                item['industry'], item['policyType'], item['content'], "", item['url'] ]
         self.ws.append(test)
 
         query = str(urlparse.urlparse(spider.browser.current_url).query)

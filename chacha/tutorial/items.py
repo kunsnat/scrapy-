@@ -13,6 +13,9 @@ class TutorialItem(scrapy.Item):
     title = scrapy.Field()
     progress = scrapy.Field()
     type = scrapy.Field()  # sup_item  announce
+
+    index = scrapy.Field()
+
     url = scrapy.Field()
 
     area = scrapy.Field()
@@ -27,5 +30,7 @@ class TutorialItem(scrapy.Item):
 
     policyType = scrapy.Field()
 
-    file_urls = scrapy.Field()
-    files = scrapy.Field()
+    number = scrapy.Field() # 文号
+
+    system = scrapy.Field() # 发文体系
+
