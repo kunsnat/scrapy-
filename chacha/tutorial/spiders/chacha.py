@@ -30,6 +30,7 @@ class QichaSpider(scrapy.Spider):
         self.hyperBrowser = webdriver.Chrome(executable_path="C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe")
         self.hyperBrowser.implicitly_wait(10)
         self.map = {}
+        self.needLogin = True
 
         currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
 
@@ -275,7 +276,7 @@ class QichaSpider(scrapy.Spider):
             yield com
 
 
-    # 政策原文
+    # 政策原文   需要登录获取文件
     def parseHyperPolicy(self, response): # https://www.chacha.top/sup_policy?id=d0c7431587332fef3a27
         print 'parse hyper sup_policy : ---> ' +  response.url
 
@@ -332,7 +333,7 @@ class QichaSpider(scrapy.Spider):
 
             # ------>  政策原文
 
-            leftContent = response.xpath('//div[@class="pull-left content-left bg-white m-b-md"]//div[@class="m-b-md"]')
+            leftContent = response.xpath('//div[@class="pull-left content-left bg-white m-b-md"]//div[@class="m-b-md"]') #特殊的class
             for left in leftContent:
                 value = self.decodeStr(left.extract())
                 if value.find('政策原文') != -1:
@@ -345,17 +346,22 @@ class QichaSpider(scrapy.Spider):
                     else:
                         os.makedirs(location)
 
-                    urls = left.xpath('.//li[@class="m-b-sm"]')   #特殊的li 
+                    urls = left.xpath('.//li[@class="m-b-sm"]')   #特殊的li
                     for url in urls:
-                        fileUrl = 'http:' + str(url.xpath('@data-href')[0].extract())
-                        name = location + url.xpath('.//a/text()')[0].extract()
-                        urllib.urlretrieve(fileUrl, filename=name)
+                        value = url.xpath('.//a').xpath('@href')
+                        if len(value) > 0:
+                            fileUrl = 'http:' + str(value[0].extract())
+                            name = location + url.xpath('.//a/text()')[0].extract()
+                            urllib.urlretrieve(fileUrl, filename=name)
                 elif value.find('政策时间轨迹') != -1:
                     pass
                 else:
                     pass
 
             yield com
+
+
+            # 需要补充 公式样式节点.  1234567890
 
     def initItem(self):
         com = TutorialItem()

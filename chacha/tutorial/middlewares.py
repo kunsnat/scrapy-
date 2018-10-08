@@ -133,6 +133,22 @@ class JSPageMiddleware(object):
         if spider.name =="chacha":
 
             if spider.isHyperlink(request.url):
+
+                if spider.needLogin:
+                    spider.hyperBrowser.get('https://www.chacha.top/')
+
+                    time.sleep(2)
+
+                    spider.hyperBrowser.find_element_by_xpath('//a[@class="header-login"]').click()
+                    spider.hyperBrowser.find_element_by_xpath('//span[@class="login-tab login-tab-last"]').click()
+
+                    spider.hyperBrowser.find_element_by_xpath('//input[@name="login_phone"]').send_keys("18094202229")
+                    spider.hyperBrowser.find_element_by_xpath('//input[@name="login_password"]').send_keys("1234567890")
+                    spider.hyperBrowser.find_element_by_xpath('//button[@class="btn-control bg-orange text-white login-btn m-t"]').click()
+
+                    time.sleep(2) # 需要补充登录操作
+                    spider.needLogin = False
+
                 spider.hyperBrowser.get(request.url)
                 print 'load hyper'
 
@@ -143,11 +159,12 @@ class JSPageMiddleware(object):
             else:
                 if spider.len == 0:
                     spider.browser.get(request.url)
+                    time.sleep(5) # 需要补充登录操作
 
                 print 'load main page and down refresh'
 
-                for i in range(1, 60): #
-                    spider.browser.find_element_by_xpath("//body").send_keys(Keys.DOWN)
+                # for i in range(1, 60): #
+                #     spider.browser.find_element_by_xpath("//body").send_keys(Keys.DOWN)
 
                 time.sleep(5)
 
