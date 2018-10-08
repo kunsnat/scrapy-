@@ -34,3 +34,5 @@ class TutorialItem(scrapy.Item):
 
     system = scrapy.Field() # 发文体系
 
+    notetype = scrapy.Field() # 公示类型
+

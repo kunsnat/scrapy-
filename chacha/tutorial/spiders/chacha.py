@@ -6,20 +6,16 @@ from scrapy import signals
 
 from scrapy import Request
 
-from scrapy.spiders.crawl import CrawlSpider, Rule
-from scrapy.http import HtmlResponse
 from tutorial.items import TutorialItem
-import urlparse
 import json
 import time
 import urllib
 import os
-from openpyxl import Workbook
 
 class QichaSpider(scrapy.Spider):
     name = "chacha"
     allowed_domains = ["http://www.chacha.top/"]
-    start_urls = ['https://www.chacha.top/search?province_code=510000&city_code=510100&query_text=%E5%88%9B%E4%B8%9A'
+    start_urls = ['https://www.chacha.top/origin?province_code=510000&city_code=510100&query_text=%E5%88%9B%E4%B8%9A&obj_type=1'
                   ]
 
     def __init__(self):
@@ -57,6 +53,8 @@ class QichaSpider(scrapy.Spider):
         print "from parse end ---> " + str(startLen)
 
         searchList = response.xpath('//li[@class="list-item"]')
+        if len(searchList) == 0: # 某些细则, list样式
+            searchList = response.xpath('//li[@class="sup-list-item m-b-md"]')
 
         if response.url == self.start_urls[0]:
             self.len = len(searchList)
@@ -81,7 +79,7 @@ class QichaSpider(scrapy.Spider):
                 else:
                     yield Request(url=hyperUrl,callback=self.parseHyperItem, dont_filter=True)
 
-                if index == 4: # 对接item项
+                if index == 2: # 对接item项
                     break
 
         if self.len > startLen: # 继续迭代爬取数据
@@ -102,18 +100,19 @@ class QichaSpider(scrapy.Spider):
         return str(url).find('sup_item') != -1 or str(url).find('baidu') != -1
 
     def isHyperAnn(self, url):
-        return str(url).find('announce') != -1
+        return str(url).find('announce') != -1 or str(url).find('publicity') != -1
 
     def isHyperPolicy(self, url):
-        return str(url).find('sup_policy') != -1
+        return str(url).find('sup_policy') != -1 or str(url).find('macro_policy') != -1 or str(url).find('imple_regu') != -1
 
-
-    #通知公式
+    # 搜索 通知公示项
+    # 通知 announce
+    # 公示 publicity
     def parseHyperAnn(self, response):  # https://www.chacha.top/announce?id=274b53d9e06f3cc04c95
-        print 'parse hyper announce: ---> ' +  response.url
+        print 'announce : ---> ' +  response.url
         if response.url != self.start_urls[0]:
             com = self.initItem()
-            com['type'] = 'announce'
+            com['type'] = self.getType(response.url)
             com['url'] = response.url
             com['index'] = self.map[response.url]
 
@@ -123,8 +122,10 @@ class QichaSpider(scrapy.Spider):
             title = titleDiv.xpath('.//span[@class="bold font-24"]/text()')[0].extract()
             com['title'] = self.decodeStr(title)
 
-            titleLabel = titleDiv.xpath('.//span[@class="policy-label"]/text()')[0].extract()
-            com['progress'] = self.decodeStr(titleLabel)
+            progressDiv = titleDiv.xpath('.//span[@class="policy-label"]/text()')
+            if len(progressDiv) > 0:  # 某些公示性文件 没有进度
+                titleLabel = progressDiv[0].extract()
+                com['progress'] = self.decodeStr(titleLabel)
 
             infos = topDiv.xpath('p')   # 直接按照固定格式
             # 适用地区 发文时间
@@ -149,7 +150,9 @@ class QichaSpider(scrapy.Spider):
                         if len(validSpan) > 0:
                             validTime = validSpan[0].extract()
                             com['validTime'] = self.decodeStr(validTime).replace("有效期限", "").replace("：","").rstrip().lstrip()
-
+                    elif value.find('公示类型') != -1:
+                        public = infoSpan.xpath('./text()')[0].extract()
+                        com['notetype'] = self.decodeStr(public).replace("公示类型", "").replace("：","").rstrip().lstrip()
                     elif value.find('行业') != -1:
                         industry = infoSpan.xpath('.//span/text()')[0].extract()
                         com['industry'] = self.decodeStr(industry).rstrip().lstrip()
@@ -161,7 +164,7 @@ class QichaSpider(scrapy.Spider):
             leftContent = response.xpath('//div[@class="pull-left content-left policy-content-box bg-white m-b-md"]//div[@class="m-b-md"]')
             for left in leftContent:
                 value = self.decodeStr(left.extract())
-                if value.find('申报详情') != -1:
+                if value.find('申报详情') != -1 or value.find('公示详情') != -1:
                     content = left.xpath('.//div[@class="detail-content"]').extract()
                     com['content'] = self.decodeStr(content).rstrip().lstrip()
                 elif value.find('资料下载') != -1:
@@ -175,7 +178,8 @@ class QichaSpider(scrapy.Spider):
                     for url in urls:
                         fileUrl = 'http:' + str(url.xpath('@data-href')[0].extract())
                         name = location + url.xpath('.//a/text()')[0].extract()
-                        urllib.urlretrieve(fileUrl, filename=name)
+                        if fileUrl.find('http://') != -1 or fileUrl.find('https://') != -1:
+                            urllib.urlretrieve(fileUrl, filename=name)
                 elif value.find('政策时间轨迹') != -1:
                     pass
                 else:
@@ -183,12 +187,12 @@ class QichaSpider(scrapy.Spider):
 
             yield com
 
-    #扶持条款
+    # 搜索 扶持
     def parseHyperItem(self, response): # https://www.chacha.top/sup_item?id=aad86a5a974c55c59aaf
-        print 'parse hyper sup_item : ---> ' +  response.url
+        print 'sup_item : ---> ' +  response.url
         if response.url != self.start_urls[0]:
             com = self.initItem()
-            com['type'] = 'sup_item'
+            com['type'] = self.getType(response.url)
             com['url'] = response.url
             com['index'] = self.map[response.url]
 
@@ -198,8 +202,10 @@ class QichaSpider(scrapy.Spider):
             title = titleDiv.xpath('.//span[@class="bold font-24"]/text()')[0].extract()
             com['title'] = self.decodeStr(title)
 
-            titleLabel = titleDiv.xpath('.//span[@class="policy-label"]/text()')[0].extract()
-            com['progress'] = self.decodeStr(titleLabel)
+            progressDiv = titleDiv.xpath('.//span[@class="policy-label"]/text()')
+            if len(progressDiv) > 0:  # 某些公示性文件 没有进度
+                titleLabel = progressDiv[0].extract()
+                com['progress'] = self.decodeStr(titleLabel)
 
             infos = topDiv.xpath('p')   # 直接按照固定格式
 
@@ -262,7 +268,8 @@ class QichaSpider(scrapy.Spider):
                     for url in urls:
                         fileUrl = 'http:' + str(url.xpath('@data-href')[0].extract())
                         name = location + url.xpath('.//a/text()')[0].extract()
-                        urllib.urlretrieve(fileUrl, filename=name)
+                        if fileUrl.find('http://') != -1 or fileUrl.find('https://') != -1:
+                            urllib.urlretrieve(fileUrl, filename=name)
                 elif value.find('政策时间轨迹') != -1:
                     pass
                 else:
@@ -271,13 +278,16 @@ class QichaSpider(scrapy.Spider):
             yield com
 
 
-    # 政策原文   需要登录获取文件
+    # 搜索 文件   相关政府政策文件 需要登录获取文件
+    # 指导性文件 macro_policy
+    # 扶持政策 sup_policy
+    # 实施细则 imple_regu
     def parseHyperPolicy(self, response): # https://www.chacha.top/sup_policy?id=d0c7431587332fef3a27
-        print 'parse hyper sup_policy : ---> ' +  response.url
+        print 'sup_policy : ---> ' +  response.url
 
         if response.url != self.start_urls[0]:
             com = self.initItem()
-            com['type'] = 'sup_policy'
+            com['type'] = self.getType(response.url)
             com['url'] = response.url
             com['index'] = self.map[response.url]
 
@@ -287,8 +297,10 @@ class QichaSpider(scrapy.Spider):
             title = titleDiv.xpath('.//span[@class="bold font-24"]/text()')[0].extract()
             com['title'] = self.decodeStr(title)
 
-            titleLabel = titleDiv.xpath('.//span[@class="policy-label"]/text()')[0].extract()
-            com['progress'] = self.decodeStr(titleLabel)
+            progressDiv = titleDiv.xpath('.//span[@class="policy-label"]/text()')
+            if len(progressDiv) > 0:  # 某些公示性文件 没有进度
+                titleLabel = progressDiv[0].extract()
+                com['progress'] = self.decodeStr(titleLabel)
 
             infos = topDiv.xpath('p')   # 直接按照固定格式
 
@@ -339,7 +351,8 @@ class QichaSpider(scrapy.Spider):
                         if len(value) > 0:
                             fileUrl = 'http:' + str(value[0].extract())
                             name = location + url.xpath('.//a/text()')[0].extract()
-                            urllib.urlretrieve(fileUrl, filename=name)
+                            if fileUrl.find('http://') != -1 or fileUrl.find('https://') != -1:
+                                urllib.urlretrieve(fileUrl, filename=name)
                 elif value.find('政策时间轨迹') != -1:
                     pass
                 else:
@@ -348,7 +361,21 @@ class QichaSpider(scrapy.Spider):
             yield com
 
 
-            # 需要补充 公式样式节点.  1234567890
+    def getType(self, url):
+        if url.find('sup_policy'): #文件  扶持
+            return 'sup_policy'
+        elif url.find('macro_policy'):# 文件  指导性文件
+            return 'macro_policy'
+        elif url.find('imple_regu'): #文件  实施细则
+            return 'imple_regu'
+
+        elif url.find('announce'): # 通知 通知
+            return 'announce'
+        elif url.find('publicity'): # 通知 公示
+            return 'publicity'
+
+        elif url.find('sup_item'):  # 扶持
+            return 'sup_item'
 
     def initItem(self):
         com = TutorialItem()
@@ -366,6 +393,7 @@ class QichaSpider(scrapy.Spider):
         com['index'] = ''
         com['number'] = ''
         com['system'] = ''
+        com['notetype'] = ''
 
         return com
 
