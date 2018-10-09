@@ -129,7 +129,7 @@ import time
 class JSPageMiddleware(object):
 
     #通过chrome 动态访问
-    def process_request(self,request, spider):
+    def process_request(self, request, spider):
         if spider.name =="chacha":
 
             if spider.isHyperlink(request.url):
@@ -167,6 +167,12 @@ class JSPageMiddleware(object):
 
                 return HtmlResponse(url=spider.browser.current_url,body=spider.browser.page_source,encoding="utf-8")
 
+        elif spider.name =="check":
+            spider.browser.get(request.url)
+
+            print 'check load mid '
+
+            return HtmlResponse(url=spider.browser.current_url,body=spider.browser.page_source,encoding="utf-8")
 
 
     # def downFresh(self, spider):

@@ -30,7 +30,7 @@ class QichaSpider(scrapy.Spider):
 
         currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
 
-        self.location = 'D:/pydemo/qichacha/chacha/download/' + currentDayFile + '/'
+        self.location = 'D:/pydemo/qichacha/chacha/download/' + currentDayFile + '/' # os.getcwd()
 
 
         super(QichaSpider, self).__init__()
@@ -39,13 +39,7 @@ class QichaSpider(scrapy.Spider):
 
 
     def spider_closed(self,spider):   #当爬虫退出的时候 关闭chrome
-        print ("spider closed")
-
-    # def parse_start_url(self, response):
-    #     com = TutorialItem()
-    #     # yield com
-    #
-    #     yield Request(self.start_urls[0], callback=self.parse)
+        print ("chacha spider closed")
 
     def parse(self, response):
 

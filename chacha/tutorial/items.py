@@ -36,3 +36,10 @@ class TutorialItem(scrapy.Item):
 
     notetype = scrapy.Field() # 公示类型
 
+
+class CheckItem(scrapy.Item):
+
+    test = scrapy.Field()
+
+    pass
+

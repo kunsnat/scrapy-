@@ -8,7 +8,9 @@
 import json
 from openpyxl import Workbook
 import urlparse
-
+from scrapy.cmdline import execute
+import os
+import sys
 import time
 
 class TutorialPipeline(object):
@@ -28,28 +30,31 @@ class TutorialPipeline(object):
                 return json.dumps(value).decode('unicode_escape')
 
     def process_item(self, item, spider):
-        test = [
-                item['title'],      item['system'],     item['number'],     item['index'],
-                item['notetype'],   item['progress'],   item['type'],       item['area'],
-                item['updateTime'], item['money'],      item['validTime'],  item['industry'],
-                item['policyType'], item['content'],    "",                 item['url']
-        ]
-        self.ws.append(test)
+        if spider.name =="chacha":
+            test = [
+                    item['title'],      item['system'],     item['number'],     item['index'],
+                    item['notetype'],   item['progress'],   item['type'],       item['area'],
+                    item['updateTime'], item['money'],      item['validTime'],  item['industry'],
+                    item['policyType'], item['content'],    "",                 item['url']
+            ]
+            self.ws.append(test)
 
-        query = str(urlparse.urlparse(spider.browser.current_url).query)
-        queryParams = dict([(k,v[0]) for k,v in urlparse.parse_qs(query).items()])
+            query = str(urlparse.urlparse(spider.browser.current_url).query)
+            queryParams = dict([(k,v[0]) for k,v in urlparse.parse_qs(query).items()])
 
-        # searchName = ''
-        # query = urlparse.urlparse(spider.browser.current_url).query
-        # for value in query.split('&'):
-        #     nameValue = value.split('=')
-        #     if nameValue[0] == 'query_text':
-        #         searchName = urllib.unquote(str(nameValue[1].decode('unicode_escape')))
-        #         break
+            self.wb.save(spider.location + self.name + '-' + queryParams['query_text'].decode('utf-8') + '.xlsx')
 
-        self.wb.save(spider.location + self.name + '-' + queryParams['query_text'].decode('utf-8') + '.xlsx')
+            return item
 
-        return item
+        elif spider.name == 'check':
 
+            # 判断 标题 test 是否存在 检测更新 入库
+            if item['test'] != '':
+                sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+                execute(["scrapy","crawl","chacha"])
+
+            print 'check  pip save ' + item['test']
+
+            return item
 
 
