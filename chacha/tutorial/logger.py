@@ -14,13 +14,16 @@ class logger:
     root = etree.parse(os.path.join(os.path.dirname(__file__), 'config.xml')).getroot()
     # 读取日志文件保存路径
     logpath = root.find('logpath').text
+    logpath = os.getcwd() # 路径强制为当前config.xml的同目录
+
+
     # 读取日志文件容量，转换为字节
     logsize = 1024*1024*int(root.find('logsize').text)
     # 读取日志文件保存个数
     lognum = int(root.find('lognum').text)
 
     # 日志文件名：由用例脚本的名称，结合日志保存路径，得到日志文件的绝对路径
-    logname = os.path.join(logpath, sys.argv[0].split('/')[-1].split('.')[0])
+    logname = os.path.join(logpath, sys.argv[0].split('/')[-1].split('.')[0]) + '.logger'
 
     # 初始化logger
     log = logging.getLogger()

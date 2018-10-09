@@ -59,10 +59,11 @@ class CheckSpider(scrapy.Spider):
             com = self.initItem()
 
             topDiv = response.xpath('//div[@class="policy-item-top m-t-md m-b-md"]')
-
             titleDiv = topDiv.xpath('.//div[@class="policy-title pull-left"]')
-            title = titleDiv.xpath('.//span[@class="bold font-24"]/text()')[0].extract()
-            com['test'] = self.decodeStr(title)
+            titleSpan = titleDiv.xpath('.//span[@class="bold font-24"]/text()')
+            if len(titleSpan) > 0:
+                title = titleSpan[0].extract()
+                com['test'] = self.decodeStr(title)
 
             yield com
 

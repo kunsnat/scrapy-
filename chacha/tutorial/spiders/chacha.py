@@ -30,7 +30,9 @@ class QichaSpider(scrapy.Spider):
 
         currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
 
-        self.location = 'D:/pydemo/qichacha/chacha/download/' + currentDayFile + '/' # os.getcwd()
+        # self.location = 'D:/pydemo/qichacha/chacha/download/' + currentDayFile + '/'
+        # os.path.abspath(os.path.join(os.getcwd(), "../.."))
+        self.location = os.path.abspath(os.path.join(os.getcwd(), "../.."))  + '/download/' + currentDayFile + '/'
 
 
         super(QichaSpider, self).__init__()
