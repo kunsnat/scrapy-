@@ -6,6 +6,8 @@ import time
 import datetime
 import platform
 
+from chacha.tutorial import logger
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -18,15 +20,15 @@ execute(["scrapy","crawl","check"])
 print '----> 路径信息 ' + os.getcwd()
 print '----> 路径信息 '  + os.path.abspath(os.path.join(os.getcwd(), "../.."))
 
-os_platform = platform.platform()
+logger.info('test')
 
-if os_platform.startswith('Darwin'):
-    print 'this is linux'
-    os.system('ls')
-elif os_platform.startswith('Window'):
-    print 'this is window'
-    os.system('dir') # 当前目录
-
+# os_platform = platform.platform()
+# if os_platform.startswith('Darwin'):
+#     print 'this is linux'
+#     os.system('ls')
+# elif os_platform.startswith('Window'):
+#     print 'this is window'
+#     os.system('dir') # 当前目录
 
 def doSth():
 

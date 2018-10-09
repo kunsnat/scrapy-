@@ -49,9 +49,9 @@ class TutorialPipeline(object):
         elif spider.name == 'check':
 
             # 判断 标题 test 是否存在 检测更新 入库
-            if item['test'] != '':
-                sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-                execute(["scrapy","crawl","chacha"])
+            # if item['test'] != '':
+            #     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+            #     execute(["scrapy","crawl","chacha"])
 
             print 'check  pip save ' + item['test']
 
