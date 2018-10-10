@@ -12,8 +12,8 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))  # ide调试
-# execute(["scrapy","crawl","chacha"])
-execute(["scrapy","crawl","check"])
+execute(["scrapy","crawl","chacha"])
+# execute(["scrapy","crawl","check"])
 
 # os.system("scrapy crawl chacha")    # 系统运行 无调试
 

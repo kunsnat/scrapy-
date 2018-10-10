@@ -23,7 +23,9 @@ class TutorialPipeline(object):
         self.ws.append(['标题', '发文体系', '文号', '序号',
                         '公示类型', '进度', '类型', '适用地区',
                         '发文时间', '扶持金额', '有效期限', '适用行业',
-                        '政策分类', '申报详情', '附件列表', '文章地址'])  # 设置表头
+                        '政策分类', '详情', '政策轨迹', '文章地址',
+                        '数据来源'
+                        ])  # 设置表头
 
 
     def parseT(self, value):
@@ -35,7 +37,8 @@ class TutorialPipeline(object):
                     item['title'],      item['system'],     item['number'],     item['index'],
                     item['notetype'],   item['progress'],   item['type'],       item['area'],
                     item['updateTime'], item['money'],      item['validTime'],  item['industry'],
-                    item['policyType'], item['content'],    "",                 item['url']
+                    item['policyType'], item['content'],    item['policyTrail'], item['url'],
+                    item['dataSource']
             ]
             self.ws.append(test)
 

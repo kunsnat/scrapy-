@@ -36,6 +36,9 @@ class TutorialItem(scrapy.Item):
 
     notetype = scrapy.Field() # 公示类型
 
+    policyTrail = scrapy.Field() # 政策轨迹
+
+    dataSource = scrapy.Field() # 数据来源
 
 class CheckItem(scrapy.Item):
 

@@ -35,7 +35,7 @@ class CheckSpider(scrapy.Spider):
         if len(searchList) == 0: # 某些细则, list样式
             searchList = response.xpath('//li[@class="sup-list-item m-b-md"]')
 
-        if response.url == self.start_urls[0]:
+        if self.start_urls.index(response.url) != -1:
             for index, items in enumerate(searchList):
                 hyper = items.xpath('.//a/@href')[0].extract()
                 hyperUrl = 'https://www.chacha.top' + hyper

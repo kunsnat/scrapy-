@@ -15,7 +15,9 @@ import os
 class QichaSpider(scrapy.Spider):
     name = "chacha"
     allowed_domains = ["http://www.chacha.top/"]
-    start_urls = ['https://www.chacha.top/origin?province_code=510000&city_code=510100&query_text=%E5%88%9B%E4%B8%9A&obj_type=1'
+    start_urls = [
+                # 'https://www.chacha.top/origin?province_code=510000&city_code=510100&query_text=%E5%88%9B%E4%B8%9A&obj_type=4',
+                'https://www.chacha.top/notice?province_code=510000&city_code=510100&query_text=%E5%88%9B%E4%B8%9A&obj_type=4'
                   ]
 
     def __init__(self):
@@ -30,9 +32,9 @@ class QichaSpider(scrapy.Spider):
 
         currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
 
-        # self.location = 'D:/pydemo/qichacha/chacha/download/' + currentDayFile + '/'
+        self.location = 'D:/pydemo/qichacha/chacha/download/' + currentDayFile + '/'
         # os.path.abspath(os.path.join(os.getcwd(), "../.."))
-        self.location = os.path.abspath(os.path.join(os.getcwd(), "../.."))  + '/download/' + currentDayFile + '/'
+        # self.location = os.path.abspath(os.path.join(os.getcwd(), "../.."))  + '/download/' + currentDayFile + '/'
 
 
         super(QichaSpider, self).__init__()
@@ -102,7 +104,7 @@ class QichaSpider(scrapy.Spider):
         return str(url).find('sup_policy') != -1 or str(url).find('macro_policy') != -1 or str(url).find('imple_regu') != -1
 
     # 搜索 通知公示项
-    # 通知 announce
+    # 通知申报 announce
     # 公示 publicity
     def parseHyperAnn(self, response):  # https://www.chacha.top/announce?id=274b53d9e06f3cc04c95
         print 'announce : ---> ' +  response.url
@@ -157,7 +159,8 @@ class QichaSpider(scrapy.Spider):
 
 
             #申报 内容详情
-            leftContent = response.xpath('//div[@class="pull-left content-left policy-content-box bg-white m-b-md"]//div[@class="m-b-md"]')
+            leftBox = response.xpath('//div[@class="pull-left content-left policy-content-box bg-white m-b-md"]')
+            leftContent = leftBox.xpath('div')
             for left in leftContent:
                 value = self.decodeStr(left.extract())
                 if value.find('申报详情') != -1 or value.find('公示详情') != -1:
@@ -177,7 +180,13 @@ class QichaSpider(scrapy.Spider):
                         if fileUrl.find('http://') != -1 or fileUrl.find('https://') != -1:
                             urllib.urlretrieve(fileUrl, filename=name)
                 elif value.find('政策时间轨迹') != -1:
-                    pass
+                    content = left.xpath('.//div[@class="detail-content"]').extract()
+                    com['policyTrail'] = self.decodeStr(content).rstrip().lstrip()
+                elif value.find('数据来源') != -1:
+                    text = left.xpath('.//div/text()')
+                    if len(text) > 0:
+                        dataSourceDiv = text[0].extract()
+                        com['dataSource'] = self.decodeStr(dataSourceDiv).replace("数据来源", "").replace("：","").rstrip().lstrip()
                 else:
                     pass
 
@@ -247,7 +256,8 @@ class QichaSpider(scrapy.Spider):
 
 
             #申报 扶持详情
-            leftContent = response.xpath('//div[@class="pull-left content-left policy-content-box bg-white m-b-md"]//div[@class="m-b-md"]')
+            leftBox = response.xpath('//div[@class="pull-left content-left policy-content-box bg-white m-b-md"]')
+            leftContent = leftBox.xpath('div')
             for left in leftContent:
                 value = self.decodeStr(left.extract())
                 if value.find('申报详情') != -1 or value.find('扶持详情') != -1:
@@ -267,7 +277,13 @@ class QichaSpider(scrapy.Spider):
                         if fileUrl.find('http://') != -1 or fileUrl.find('https://') != -1:
                             urllib.urlretrieve(fileUrl, filename=name)
                 elif value.find('政策时间轨迹') != -1:
-                    pass
+                    content = left.xpath('.//div[@class="detail-content"]').extract()
+                    com['policyTrail'] = self.decodeStr(content).rstrip().lstrip()
+                elif value.find('数据来源') != -1:
+                    text = left.xpath('.//div/text()')
+                    if len(text) > 0:
+                        dataSourceDiv = text[0].extract()
+                        com['dataSource'] = self.decodeStr(dataSourceDiv).replace("数据来源", "").replace("：","").rstrip().lstrip()
                 else:
                     pass
 
@@ -328,7 +344,8 @@ class QichaSpider(scrapy.Spider):
                         pass
 
             # 政策原文
-            leftContent = response.xpath('//div[@class="pull-left content-left bg-white m-b-md"]//div[@class="m-b-md"]') #特殊的class
+            leftBox = response.xpath('//div[@class="pull-left content-left bg-white m-b-md"]') #特殊的class
+            leftContent = leftBox.xpath('div')
             for left in leftContent:
                 value = self.decodeStr(left.extract())
                 if value.find('政策原文') != -1:
@@ -350,7 +367,14 @@ class QichaSpider(scrapy.Spider):
                             if fileUrl.find('http://') != -1 or fileUrl.find('https://') != -1:
                                 urllib.urlretrieve(fileUrl, filename=name)
                 elif value.find('政策时间轨迹') != -1:
-                    pass
+                    content = left.xpath('.//div[@class="detail-content"]').extract()
+                    com['policyTrail'] = self.decodeStr(content).rstrip().lstrip()
+                elif value.find('数据来源') != -1:
+                    text = left.xpath('.//div/text()')
+                    if len(text) > 0:
+                        dataSourceDiv = text[0].extract()
+                        com['dataSource'] = self.decodeStr(dataSourceDiv).replace("数据来源", "").replace("：","").rstrip().lstrip()
+
                 else:
                     pass
 
@@ -390,7 +414,8 @@ class QichaSpider(scrapy.Spider):
         com['number'] = ''
         com['system'] = ''
         com['notetype'] = ''
-
+        com['policyTrail'] = ''
+        com['dataSource'] = ''
         return com
 
     def decodeStr(self, value):
