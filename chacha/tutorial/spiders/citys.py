@@ -10,6 +10,8 @@ import json
 from openpyxl import Workbook
 import os
 import time
+import xlrd
+import xlwt
 
 from tutorial.items import CityItem
 
@@ -31,7 +33,7 @@ class CitySpider(scrapy.Spider):
         self.browser = webdriver.Chrome(executable_path="C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe")
         self.browser.implicitly_wait(10)
 
-        self.map = {}
+        self.workBookMap = {}
 
         currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
         self.location = 'D:/pydemo/qichacha/chacha/download/' + currentDayFile + '/'

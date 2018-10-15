@@ -40,6 +40,8 @@ class TutorialItem(scrapy.Item):
 
     dataSource = scrapy.Field() # 数据来源
 
+    fromUrl = scrapy.Field() # 记录目标item来自的查询url, 便于分别保存excel数据.
+
 class CheckItem(scrapy.Item):
 
     test = scrapy.Field()

@@ -154,7 +154,7 @@ class JSPageMiddleware(object):
                 return HtmlResponse(url=spider.hyperBrowser.current_url,body=spider.hyperBrowser.page_source,encoding="utf-8")
 
             else:
-                if spider.len == 0:
+                if spider.len[request.url] == 0:
                     spider.browser.get(request.url)
                     # time.sleep(5) # 需要补充登录操作
 

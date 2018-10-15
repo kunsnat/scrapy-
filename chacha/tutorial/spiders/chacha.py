@@ -11,6 +11,8 @@ import json
 import urllib
 
 from openpyxl import Workbook
+import xlrd
+import xlwt
 import os
 import time
 
@@ -20,27 +22,20 @@ class QichaSpider(scrapy.Spider):
     start_urls = [
                 # 'https://www.chacha.top/origin?province_code=510000&city_code=510100&query_text=%E5%88%9B%E4%B8%9A&obj_type=4',
                 'https://www.chacha.top/notice?province_code=510000&city_code=510100&query_text=%E5%88%9B%E4%B8%9A&obj_type=4'
-                  ]
+                ]
+
 
     def __init__(self):
         self.browser = webdriver.Chrome(executable_path="C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe")
         self.browser.implicitly_wait(10)
-        self.len = 0
+        self.len = {}
 
         self.hyperBrowser = webdriver.Chrome(executable_path="C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe")
         self.hyperBrowser.implicitly_wait(10)
-        self.map = {}
+        self.workBookMap = {}
+        self.hyperIndexMap = {}
+        self.fromUrl = {} # 标记最终的item, 来自哪个查询url, 便于分别保存请求.
         self.needLogin = True
-
-        self.wb = Workbook()
-        self.ws = self.wb.active
-        self.filename = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-        self.ws.append(['标题', '发文体系', '文号', '序号',
-                    '公示类型', '进度', '类型', '适用地区',
-                    '发文时间', '扶持金额', '有效期限', '适用行业',
-                    '政策分类', '详情', '政策轨迹', '文章地址',
-                    '数据来源'
-                    ])  # 设置表头
 
         currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
         self.location = 'D:/pydemo/qichacha/chacha/download/' + currentDayFile + '/'
@@ -52,47 +47,98 @@ class QichaSpider(scrapy.Spider):
         dispatcher.connect(self.spider_closed,signals.spider_closed)
 
 
-    def spider_closed(self,spider):   #当爬虫退出的时候 关闭chrome
-        print ("chacha spider closed")
+
+    def start_requests(self):  # 循环搜索  创建多个地址 以供查询 优先start_urls 两者选一
+        # 读取excel 对应district_code区域文件, 拿到相应的code和地址, 然后保存成对应的ws
+        # 根据510000 四川, 拿到对四川的 城市,   比如拿到 成都 510100  后续 对应excel 成都区域, 再添加相应的 dis区域编码
+        cityExcel = self.location + '510100.xlsx'
+        provinceExcel = self.location + '510000.xlsx'
+
+        url = 'https://www.chacha.top/notice?province_code=510000&city_code=510100'
+
+        # 打开文件
+        city = xlrd.open_workbook(cityExcel)
+        province = xlrd.open_workbook(provinceExcel)
+
+        # 根据sheet索引或者名称获取sheet内容
+        citySheet = city.sheet_by_index(0) # sheet索引从0开始
+        provinceSheet = province.sheet_by_index(0)
+
+        # 获取整行和整列的值（数组）
+        codeName = {}
+
+        cityName= citySheet.col_values(1)
+        cityCode = citySheet.col_values(4)
+
+        provinceName = provinceSheet.col_values(1)
+        provinceCode = citySheet.col_values(4)
+        for index, name in enumerate(provinceName):
+            if index == 0:
+                continue
+            code = provinceCode[index]
+            codeName[code] = name
+
+        for index, name in enumerate(cityName):
+            if index == 0:
+                continue
+            code = cityCode[index]
+            codeName[code] = name
+
+        self.codeName = codeName
+
+        urls = []
+
+        for index, name in enumerate(cityName):
+            if index == 0:
+                continue
+            code = cityCode[index]
+            value = url + '&district_code=' + code
+            self.len[value] = 0
+            urls.append(value)
+
+
+        for url in urls:
+
+            yield self.make_requests_from_url(url)
 
     def parse(self, response):
 
-        startLen = self.len
+        startLen = self.len[response.url]
         print "from parse end ---> " + str(startLen)
 
         searchList = response.xpath('//li[@class="list-item"]')
         if len(searchList) == 0: # 某些细则, list样式
             searchList = response.xpath('//li[@class="sup-list-item m-b-md"]')
 
-        if response.url == self.start_urls[0]:
-            self.len = len(searchList)
+        self.len[response.url] = len(searchList)
 
-            for index, items in enumerate(searchList):
+        for index, items in enumerate(searchList):
 
-                if index < startLen:
-                    continue
+            if index < startLen:
+                continue
 
-                href = items.xpath('.//a/@href')
-                if len(href) > 0:
-                    hyper = href[0].extract()
-                    hyperUrl = 'https://www.chacha.top' + hyper
+            href = items.xpath('.//a/@href')
+            if len(href) > 0:
+                hyper = href[0].extract()
+                hyperUrl = 'https://www.chacha.top' + hyper
 
-                    self.map[hyperUrl] = index
-                    self.index = index
+                self.hyperIndexMap[hyperUrl] = index
+                self.fromUrl[hyperUrl] = response.url
 
-                    print 'current index ---------->  ' + str(index)
+                print 'current index ---------->  ' + str(index)
 
-                    if self.isHyperAnn(hyperUrl):
-                        yield Request(url=hyperUrl,callback=self.parseHyperAnn, dont_filter=True)
-                    elif self.isHyperPolicy(hyperUrl):
-                        yield Request(url=hyperUrl,callback=self.parseHyperPolicy, dont_filter=True)
-                    else:
-                        yield Request(url=hyperUrl,callback=self.parseHyperItem, dont_filter=True)
+                if self.isHyperAnn(hyperUrl):
+                    yield Request(url=hyperUrl,callback=self.parseHyperAnn, dont_filter=True)
+                elif self.isHyperPolicy(hyperUrl):
+                    yield Request(url=hyperUrl,callback=self.parseHyperPolicy, dont_filter=True)
+                else:
+                    yield Request(url=hyperUrl,callback=self.parseHyperItem, dont_filter=True)
 
-                    if index == 2: # 对接item项
-                        break
+                if index == 2: # 对接item项
+                    break
 
-        if self.len > startLen: # 继续迭代爬取数据
+
+        if self.len[response.url] > startLen: # 继续迭代爬取数据
             pass
             # yield Request(url='http://www.baidu.com',callback=self.parse, dont_filter=True)
             # yield Request(url=self.start_urls[0],callback=self.parse, dont_filter=True)
@@ -124,7 +170,8 @@ class QichaSpider(scrapy.Spider):
             com = self.initItem()
             com['type'] = self.getType(response.url)
             com['url'] = response.url
-            com['index'] = self.map[response.url]
+            com['index'] = self.hyperIndexMap[response.url]
+            com['fromUrl'] = self.fromUrl[response.url]
 
             topDiv = response.xpath('//div[@class="policy-item-top m-t-md m-b-md"]')
 
@@ -211,7 +258,8 @@ class QichaSpider(scrapy.Spider):
             com = self.initItem()
             com['type'] = self.getType(response.url)
             com['url'] = response.url
-            com['index'] = self.map[response.url]
+            com['index'] = self.hyperIndexMap[response.url]
+            com['fromUrl'] = self.fromUrl[response.url]
 
             topDiv = response.xpath('//div[@class="policy-item-top m-t-md m-b-md"]')
 
@@ -313,7 +361,8 @@ class QichaSpider(scrapy.Spider):
             com = self.initItem()
             com['type'] = self.getType(response.url)
             com['url'] = response.url
-            com['index'] = self.map[response.url]
+            com['index'] = self.hyperIndexMap[response.url]
+            com['fromUrl'] = self.fromUrl[response.url]
 
             topDiv = response.xpath('//div[@class="policy-item-top m-t-md m-b-md"]')
 
@@ -428,10 +477,15 @@ class QichaSpider(scrapy.Spider):
         com['notetype'] = ''
         com['policyTrail'] = ''
         com['dataSource'] = ''
+        com['fromUrl'] = ''
         return com
 
     def decodeStr(self, value):
         return json.dumps(value).decode('unicode_escape')
+
+
+    def spider_closed(self,spider):   #当爬虫退出的时候 关闭chrome
+        print ("chacha spider closed")
 
 
 

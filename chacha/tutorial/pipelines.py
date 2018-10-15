@@ -28,12 +28,12 @@ class TutorialPipeline(object):
                     item['policyType'], item['content'],    item['policyTrail'], item['url'],
                     item['dataSource']
             ]
-            spider.ws.append(row)
 
-            query = str(urlparse.urlparse(spider.browser.current_url).query)
-            queryParams = dict([(k,v[0]) for k,v in urlparse.parse_qs(query).items()])
+            key = item['fromUrl']
+            value = self.chachaWorkBook(spider, key)
 
-            spider.wb.save(spider.location + spider.name + '-' + queryParams['query_text'].decode('utf-8') + '.xlsx')
+            value['ws'].append(row)  # 需要每个url对应一个 查询结果excel
+            value['wb'].save(spider.location + self.chachaCodeName(spider, key) +  '.xlsx')
 
             return item
 
@@ -55,14 +55,25 @@ class TutorialPipeline(object):
             ]
 
             key = item['url']
-
-            value = self.mapKey(spider, key)
+            value = self.citysWorkBoox(spider, key)
 
             value['ws'].append(row)  # 需要每个url对应一个 查询结果excel
-
             value['wb'].save(spider.location + self.mapCode(key) +  '.xlsx')
 
             return item
+
+    def chachaCodeName(self, spider, url): # 省份, 城市, 区县 , province, city, district
+
+        query = str(urlparse.urlparse(url).query)
+        queryParams = dict([(k,v[0]) for k,v in urlparse.parse_qs(query).items()])
+        if queryParams.has_key('district_code'):
+            code = queryParams['district_code']
+            return spider.codeName[code]
+        elif queryParams.has_key('province_code'):
+            code = queryParams['province_code']
+            return spider.codeName[code]
+        else:
+            return 'china'
 
     def mapCode(self, url): # 省份, 城市, 区县 , province, city, district
 
@@ -75,10 +86,32 @@ class TutorialPipeline(object):
         else:
             return 'china'
 
+    def chachaWorkBook(self, spider, key):
+        if dict(spider.workBookMap).has_key(key):
+            return spider.workBookMap[key]
 
-    def mapKey(self, spider, key):
-        if dict(spider.map).has_key(key):
-            return spider.map[key]
+        else:
+            wb = Workbook()
+            ws = wb.active
+            ws.append(['标题', '发文体系', '文号', '序号',
+                            '公示类型', '进度', '类型', '适用地区',
+                            '发文时间', '扶持金额', '有效期限', '适用行业',
+                            '政策分类', '详情', '政策轨迹', '文章地址',
+                            '数据来源'
+                            ])  # 设置表头
+
+            value = {'wb':'', 'ws':''}
+            value['wb'] = wb
+            value['ws'] = ws
+
+            spider.workBookMap[key] = value
+
+            return value
+
+
+    def citysWorkBoox(self, spider, key):
+        if dict(spider.workBookMap).has_key(key):
+            return spider.workBookMap[key]
 
         else:
             wb = Workbook()
@@ -93,7 +126,7 @@ class TutorialPipeline(object):
             value['wb'] = wb
             value['ws'] = ws
 
-            spider.map[key] = value
+            spider.workBookMap[key] = value
 
             return value
 
