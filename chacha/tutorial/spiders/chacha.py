@@ -33,6 +33,7 @@ class QichaSpider(scrapy.Spider):
         self.hyperBrowser = webdriver.Chrome(executable_path="C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe")
         self.hyperBrowser.implicitly_wait(10)
         self.workBookMap = {}
+        self.startUrlIndex = {}
         self.hyperIndexMap = {}
         self.fromUrl = {} # 标记最终的item, 来自哪个查询url, 便于分别保存请求.
         self.needLogin = True
@@ -94,11 +95,29 @@ class QichaSpider(scrapy.Spider):
             code = cityCode[index]
             value = url + '&district_code=' + code
             self.len[value] = 0
+
+            wb = Workbook()
+            ws = wb.active
+            ws.append(['标题', '发文体系', '文号', '序号',
+                       '公示类型', '进度', '类型', '适用地区',
+                       '发文时间', '扶持金额', '有效期限', '适用行业',
+                       '政策分类', '详情', '政策轨迹', '文章地址',
+                       '数据来源'
+                       ])  # 设置表头
+            books = {'wb':'', 'ws':''}
+            books['wb'] = wb
+            books['ws'] = ws
+
+            self.startUrlIndex[value] = index
+
+            self.workBookMap[value] = books
+
             urls.append(value)
+            if index == 6:
+                break
 
 
         for url in urls:
-
             yield self.make_requests_from_url(url)
 
     def parse(self, response):
@@ -120,7 +139,7 @@ class QichaSpider(scrapy.Spider):
             href = items.xpath('.//a/@href')
             if len(href) > 0:
                 hyper = href[0].extract()
-                hyperUrl = 'https://www.chacha.top' + hyper
+                hyperUrl = 'https://www.chacha.top' + hyper + '&justindex=' + str(self.startUrlIndex[response.url]) # 为了使hyuperUrl不一样
 
                 self.hyperIndexMap[hyperUrl] = index
                 self.fromUrl[hyperUrl] = response.url

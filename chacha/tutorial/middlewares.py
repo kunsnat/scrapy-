@@ -156,14 +156,13 @@ class JSPageMiddleware(object):
             else:
                 if spider.len[request.url] == 0:
                     spider.browser.get(request.url)
-                    # time.sleep(5) # 需要补充登录操作
 
                 print 'load main page and down refresh'
 
                 # for i in range(1, 60): #
                 #     spider.browser.find_element_by_xpath("//body").send_keys(Keys.DOWN)
 
-                time.sleep(5)
+                time.sleep(1)
 
                 return HtmlResponse(url=spider.browser.current_url,body=spider.browser.page_source,encoding="utf-8")
 

@@ -30,7 +30,7 @@ class TutorialPipeline(object):
             ]
 
             key = item['fromUrl']
-            value = self.chachaWorkBook(spider, key)
+            value = spider.workBookMap[key]
 
             value['ws'].append(row)  # 需要每个url对应一个 查询结果excel
             value['wb'].save(spider.location + self.chachaCodeName(spider, key) +  '.xlsx')
@@ -86,27 +86,6 @@ class TutorialPipeline(object):
         else:
             return 'china'
 
-    def chachaWorkBook(self, spider, key):
-        if dict(spider.workBookMap).has_key(key):
-            return spider.workBookMap[key]
-
-        else:
-            wb = Workbook()
-            ws = wb.active
-            ws.append(['标题', '发文体系', '文号', '序号',
-                            '公示类型', '进度', '类型', '适用地区',
-                            '发文时间', '扶持金额', '有效期限', '适用行业',
-                            '政策分类', '详情', '政策轨迹', '文章地址',
-                            '数据来源'
-                            ])  # 设置表头
-
-            value = {'wb':'', 'ws':''}
-            value['wb'] = wb
-            value['ws'] = ws
-
-            spider.workBookMap[key] = value
-
-            return value
 
 
     def citysWorkBoox(self, spider, key):
