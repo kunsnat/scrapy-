@@ -12,15 +12,16 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))  # ide调试
-execute(["scrapy","crawl","chacha"])
+# execute(["scrapy","crawl","chacha"])
 # execute(["scrapy","crawl","check"])
+execute(["scrapy","crawl","citys"])
 
 # os.system("scrapy crawl chacha")    # 系统运行 无调试
 
-print '----> 路径信息 ' + os.getcwd()
-print '----> 路径信息 '  + os.path.abspath(os.path.join(os.getcwd(), "../.."))
-
-logger.info('test')
+# print '----> 路径信息 ' + os.getcwd()
+# print '----> 路径信息 '  + os.path.abspath(os.path.join(os.getcwd(), "../.."))
+#
+# logger.info('test')
 
 # os_platform = platform.platform()
 # if os_platform.startswith('Darwin'):
@@ -30,13 +31,13 @@ logger.info('test')
 #     print 'this is window'
 #     os.system('dir') # 当前目录
 
-def doSth():
-
-    print('test')
-
-    # 假装做这件事情需要一分钟
-
-    time.sleep(60)
+# def doSth():
+#
+#     print('test')
+#
+#     # 假装做这件事情需要一分钟
+#
+#     time.sleep(60)
 
 # def main():
 #     print '1'
@@ -45,7 +46,7 @@ def doSth():
 #         print '1'
 
 
-doSth()
+# doSth()
 
 
 

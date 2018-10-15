@@ -44,5 +44,11 @@ class CheckItem(scrapy.Item):
 
     test = scrapy.Field()
 
-    pass
 
+class CityItem(scrapy.Item):
+    name = scrapy.Field()  # data-name
+    title = scrapy.Field()  # title
+    level = scrapy.Field() # data-level
+    id = scrapy.Field() # data-id
+    text = scrapy.Field() # //a/text()
+    url = scrapy.Field() # tmp url

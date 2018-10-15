@@ -128,16 +128,17 @@ from scrapy.http import HtmlResponse
 import time
 class JSPageMiddleware(object):
 
-    #通过chrome 动态访问
+    #通过chrome 动态访问http_proxy
     def process_request(self, request, spider):
+        print spider.name + 'load JSPageMiddleware process_request'
+
         if spider.name =="chacha":
 
             if spider.isHyperlink(request.url):
-
                 # if spider.needLogin:
                 #     spider.hyperBrowser.get('https://www.chacha.top/')
+                #     time.sleep(2) # 预留加载网页时间
                 #     spider.needLogin = False
-                #     time.sleep(1)
                 #     spider.hyperBrowser.find_element_by_xpath('//a[@class="header-login"]').click()
                 #     spider.hyperBrowser.find_element_by_xpath('//span[@class="login-tab login-tab-last"]').click()
                 #
@@ -145,8 +146,7 @@ class JSPageMiddleware(object):
                 #     spider.hyperBrowser.find_element_by_xpath('//input[@name="login_password"]').send_keys("1234567890")
                 #     spider.hyperBrowser.find_element_by_xpath('//button[@class="btn-control bg-orange text-white login-btn m-t"]').click()
                 #
-                #     time.sleep(3) # 需要补充登录操作
-
+                #     time.sleep(5) # find_element_by_xpath 查询有点慢, 需要等待
 
                 spider.hyperBrowser.get(request.url)
                 print 'load hyper'
@@ -170,7 +170,13 @@ class JSPageMiddleware(object):
         elif spider.name =="check":
             spider.browser.get(request.url)
 
-            print 'check load mid '
+            return HtmlResponse(url=spider.browser.current_url,body=spider.browser.page_source,encoding="utf-8")
+
+        elif spider.name == "citys":
+            spider.browser.get(request.url)
+            time.sleep(1)
+            spider.browser.find_element_by_xpath('//input[@id="city"]').click()
+            time.sleep(2)
 
             return HtmlResponse(url=spider.browser.current_url,body=spider.browser.page_source,encoding="utf-8")
 

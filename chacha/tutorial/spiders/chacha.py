@@ -8,9 +8,11 @@ from scrapy import Request
 
 from tutorial.items import TutorialItem
 import json
-import time
 import urllib
+
+from openpyxl import Workbook
 import os
+import time
 
 class QichaSpider(scrapy.Spider):
     name = "chacha"
@@ -30,12 +32,20 @@ class QichaSpider(scrapy.Spider):
         self.map = {}
         self.needLogin = True
 
-        currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
+        self.wb = Workbook()
+        self.ws = self.wb.active
+        self.filename = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+        self.ws.append(['标题', '发文体系', '文号', '序号',
+                    '公示类型', '进度', '类型', '适用地区',
+                    '发文时间', '扶持金额', '有效期限', '适用行业',
+                    '政策分类', '详情', '政策轨迹', '文章地址',
+                    '数据来源'
+                    ])  # 设置表头
 
+        currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
         self.location = 'D:/pydemo/qichacha/chacha/download/' + currentDayFile + '/'
         # os.path.abspath(os.path.join(os.getcwd(), "../.."))
         # self.location = os.path.abspath(os.path.join(os.getcwd(), "../.."))  + '/download/' + currentDayFile + '/'
-
 
         super(QichaSpider, self).__init__()
 
@@ -62,23 +72,25 @@ class QichaSpider(scrapy.Spider):
                 if index < startLen:
                     continue
 
-                hyper = items.xpath('.//a/@href')[0].extract()
-                hyperUrl = 'https://www.chacha.top' + hyper
+                href = items.xpath('.//a/@href')
+                if len(href) > 0:
+                    hyper = href[0].extract()
+                    hyperUrl = 'https://www.chacha.top' + hyper
 
-                self.map[hyperUrl] = index
-                self.index = index
+                    self.map[hyperUrl] = index
+                    self.index = index
 
-                print 'current index ---------->  ' + str(index)
+                    print 'current index ---------->  ' + str(index)
 
-                if self.isHyperAnn(hyperUrl):
-                    yield Request(url=hyperUrl,callback=self.parseHyperAnn, dont_filter=True)
-                elif self.isHyperPolicy(hyperUrl):
-                    yield Request(url=hyperUrl,callback=self.parseHyperPolicy, dont_filter=True)
-                else:
-                    yield Request(url=hyperUrl,callback=self.parseHyperItem, dont_filter=True)
+                    if self.isHyperAnn(hyperUrl):
+                        yield Request(url=hyperUrl,callback=self.parseHyperAnn, dont_filter=True)
+                    elif self.isHyperPolicy(hyperUrl):
+                        yield Request(url=hyperUrl,callback=self.parseHyperPolicy, dont_filter=True)
+                    else:
+                        yield Request(url=hyperUrl,callback=self.parseHyperItem, dont_filter=True)
 
-                if index == 2: # 对接item项
-                    break
+                    if index == 2: # 对接item项
+                        break
 
         if self.len > startLen: # 继续迭代爬取数据
             pass
