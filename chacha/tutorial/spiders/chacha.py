@@ -58,7 +58,7 @@ class QichaSpider(scrapy.Spider):
         cityExcel = self.location + '510100.xlsx'
         provinceExcel = self.location + '510000.xlsx'
 
-        url = 'https://www.chacha.top/notice?province_code=510000&city_code=510100'
+        url = 'https://www.chacha.top/search?province_code=510000&city_code=510100'
 
         # 打开文件
         city = xlrd.open_workbook(cityExcel)
@@ -116,7 +116,7 @@ class QichaSpider(scrapy.Spider):
             self.workBookMap[value] = books
 
             urls.append(value)
-            if index == 6:
+            if index == 1:
                 break
 
 
@@ -133,11 +133,26 @@ class QichaSpider(scrapy.Spider):
             searchList = response.xpath('//li[@class="sup-list-item m-b-md"]')
 
         self.len[response.url] = len(searchList)
-
+        noEnd = True
         for index, items in enumerate(searchList):
 
             if index < startLen:
                 continue
+
+            if index % 100 == 0: # 对接item项  检测是否已经在数据库存储 --> TODO
+                logging.info(" to do check need refresh data ----> ")
+
+            progressSpan = items.xpath('.//span[@class="policy-label m-l-sm"]')
+            if len(progressSpan) == 0: # 某些细则, list样式
+                progressSpan = items.xpath('.//span[@class="policy-label"]')
+            for progress in progressSpan:  #
+                value = self.decodeStr(progress.extract())
+                if value.find('申报已截止') != -1:
+                    noEnd = False
+
+            if noEnd == False:
+                logging.info(" refresh data is end in no more to sub ")
+                break
 
             href = items.xpath('.//a/@href')
             if len(href) > 0:
@@ -147,7 +162,7 @@ class QichaSpider(scrapy.Spider):
                 self.hyperIndexMap[hyperUrl] = index
                 self.fromUrl[hyperUrl] = response.url
 
-                logging.info('current index ---------->  ' + str(index))
+                logging.info('current index ---------->  ' + str(index) + ' ---- '  + str(startLen))
 
                 if self.isHyperAnn(hyperUrl):
                     yield Request(url=hyperUrl,callback=self.parseHyperAnn, dont_filter=True)
@@ -156,15 +171,13 @@ class QichaSpider(scrapy.Spider):
                 else:
                     yield Request(url=hyperUrl,callback=self.parseHyperItem, dont_filter=True)
 
-                if index == 2: # 对接item项
-                    break
 
 
-        if self.len[response.url] > startLen: # 继续迭代爬取数据
+        if self.len[response.url] > startLen and noEnd: # 继续迭代爬取数据
             logging.info('parse move on  ----> ' + response.url)
             yield Request(url=response.url,callback=self.parse, dont_filter=True)
         else:
-            logging.info('parse end ----> ' + response.url)
+            logging.info('parse end ----> ' + startLen + '--' + self.len[response.url] + '---' + response.url)
 
 
     def isHyperlink(self, url):
@@ -461,19 +474,19 @@ class QichaSpider(scrapy.Spider):
 
 
     def getType(self, url):
-        if url.find('sup_policy'): #文件  扶持
+        if url.find('sup_policy') != -1: #文件  扶持
             return 'sup_policy'
-        elif url.find('macro_policy'):# 文件  指导性文件
+        elif url.find('macro_policy') != -1:# 文件  指导性文件
             return 'macro_policy'
-        elif url.find('imple_regu'): #文件  实施细则
+        elif url.find('imple_regu') != -1: #文件  实施细则
             return 'imple_regu'
 
-        elif url.find('announce'): # 通知 通知
+        elif url.find('announce') != -1: # 通知 通知
             return 'announce'
-        elif url.find('publicity'): # 通知 公示
+        elif url.find('publicity') != -1: # 通知 公示
             return 'publicity'
 
-        elif url.find('sup_item'):  # 扶持
+        elif url.find('sup_item') != -1:  # 扶持
             return 'sup_item'
 
     def initItem(self):
