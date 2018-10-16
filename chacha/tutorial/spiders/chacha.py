@@ -16,6 +16,9 @@ import xlwt
 import os
 import time
 
+import logging
+
+
 class QichaSpider(scrapy.Spider):
     name = "chacha"
     allowed_domains = ["http://www.chacha.top/"]
@@ -121,9 +124,9 @@ class QichaSpider(scrapy.Spider):
             yield self.make_requests_from_url(url)
 
     def parse(self, response):
-
         startLen = self.len[response.url]
-        print "from parse end ---> " + str(startLen)
+
+        logging.info('parse start  len ----> ' + str(startLen))
 
         searchList = response.xpath('//li[@class="list-item"]')
         if len(searchList) == 0: # 某些细则, list样式
@@ -144,7 +147,7 @@ class QichaSpider(scrapy.Spider):
                 self.hyperIndexMap[hyperUrl] = index
                 self.fromUrl[hyperUrl] = response.url
 
-                print 'current index ---------->  ' + str(index)
+                logging.info('current index ---------->  ' + str(index))
 
                 if self.isHyperAnn(hyperUrl):
                     yield Request(url=hyperUrl,callback=self.parseHyperAnn, dont_filter=True)
@@ -158,14 +161,10 @@ class QichaSpider(scrapy.Spider):
 
 
         if self.len[response.url] > startLen: # 继续迭代爬取数据
-            pass
-            # yield Request(url='http://www.baidu.com',callback=self.parse, dont_filter=True)
-            # yield Request(url=self.start_urls[0],callback=self.parse, dont_filter=True)
-
+            logging.info('parse move on  ----> ' + response.url)
+            yield Request(url=response.url,callback=self.parse, dont_filter=True)
         else:
-            if self.isHyperlink(response.url):
-                print 'parse from url hyper' # 超链 需要的单独管道下载数据.
-            print 'list is end no more '
+            logging.info('parse end ----> ' + response.url)
 
 
     def isHyperlink(self, url):
@@ -184,7 +183,8 @@ class QichaSpider(scrapy.Spider):
     # 通知申报 announce
     # 公示 publicity
     def parseHyperAnn(self, response):  # https://www.chacha.top/announce?id=274b53d9e06f3cc04c95
-        print 'announce : ---> ' +  response.url
+        logging.info('parse hyper announce publicity : ---> ' +  response.url)
+
         if response.url != self.start_urls[0]:
             com = self.initItem()
             com['type'] = self.getType(response.url)
@@ -272,7 +272,7 @@ class QichaSpider(scrapy.Spider):
 
     # 搜索 扶持
     def parseHyperItem(self, response): # https://www.chacha.top/sup_item?id=aad86a5a974c55c59aaf
-        print 'sup_item : ---> ' +  response.url
+        logging.info('parse hyper sup_item : ---> ' +  response.url)
         if response.url != self.start_urls[0]:
             com = self.initItem()
             com['type'] = self.getType(response.url)
@@ -374,8 +374,7 @@ class QichaSpider(scrapy.Spider):
     # 扶持政策 sup_policy
     # 实施细则 imple_regu
     def parseHyperPolicy(self, response): # https://www.chacha.top/sup_policy?id=d0c7431587332fef3a27
-        print 'sup_policy : ---> ' +  response.url
-
+        logging.info('parse hyper macro_policy sup_policy imple_regu: ---> ' +  response.url)
         if response.url != self.start_urls[0]:
             com = self.initItem()
             com['type'] = self.getType(response.url)
@@ -504,7 +503,7 @@ class QichaSpider(scrapy.Spider):
 
 
     def spider_closed(self,spider):   #当爬虫退出的时候 关闭chrome
-        print ("chacha spider closed")
+        logging.info('close-------------------------> ' + spider.name)
 
 
 

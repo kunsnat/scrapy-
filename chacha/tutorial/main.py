@@ -7,6 +7,7 @@ import datetime
 import platform
 
 from chacha.tutorial import logger
+import logging
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -21,7 +22,8 @@ execute(["scrapy","crawl","chacha"])
 # print '----> 路径信息 ' + os.getcwd()
 # print '----> 路径信息 '  + os.path.abspath(os.path.join(os.getcwd(), "../.."))
 #
-# logger.info('test')
+
+# logging.info('test ----> ')
 
 # os_platform = platform.platform()
 # if os_platform.startswith('Darwin'):
