@@ -20,7 +20,7 @@ class TutorialPipeline(object):
                 return json.dumps(value).decode('unicode_escape')
 
     def process_item(self, item, spider):
-        if spider.name =="chacha":
+        if spider.name =="chaxun":
             row = [
                     item['title'],      item['system'],     item['number'],     item['index'],
                     item['notetype'],   item['progress'],   item['type'],       item['area'],
@@ -33,7 +33,7 @@ class TutorialPipeline(object):
             value = spider.workBookMap[key]
 
             value['ws'].append(row)  # 需要每个url对应一个 查询结果excel
-            value['wb'].save(spider.location + self.chachaCodeName(spider, key) +  '.xlsx')
+            value['wb'].save(spider.location + spider.saveName)
 
             return item
 
@@ -62,6 +62,7 @@ class TutorialPipeline(object):
 
             return item
 
+    # 区域名称 + 类型(扶持, 公示, 通知)
     def chachaCodeName(self, spider, url): # 省份, 城市, 区县 , province, city, district
 
         query = str(urlparse.urlparse(url).query)

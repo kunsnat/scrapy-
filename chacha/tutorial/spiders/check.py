@@ -6,7 +6,7 @@ from scrapy import Request
 from selenium import webdriver
 from pydispatch import dispatcher
 
-from tutorial.items import CheckItem
+from chacha.tutorial.items import CheckItem
 import json
 
 

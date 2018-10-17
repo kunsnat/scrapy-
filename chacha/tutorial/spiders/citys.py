@@ -13,7 +13,7 @@ import time
 import xlrd
 import xlwt
 
-from tutorial.items import CityItem
+from chacha.tutorial.items import CityItem
 
 
 class CitySpider(scrapy.Spider):
@@ -35,9 +35,7 @@ class CitySpider(scrapy.Spider):
 
         self.workBookMap = {}
 
-        currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
-        self.location = 'D:/pydemo/qichacha/chacha/download/' + currentDayFile + '/'
-
+        self.location = 'D:/pydemo/qichacha/chacha/download/areacode/'
 
         if os.path.exists(self.location):
             pass

@@ -7,8 +7,9 @@
 
 from scrapy import signals
 import random
-from scrapy.conf import settings
 from selenium.webdriver.common.keys import Keys
+
+from scrapy.utils.project import get_project_settings
 
 
 class TutorialSpiderMiddleware(object):
@@ -108,6 +109,7 @@ class TutorialDownloaderMiddleware(object):
 
 #User-agent
 class UAMiddleware(object):
+    settings = get_project_settings()
     user_agent_list = settings['USER_AGENT_LIST']
 
     def process_request(self, request, spider):
@@ -116,6 +118,7 @@ class UAMiddleware(object):
 
 #ip
 class ProxyMiddleware(object):
+    settings = get_project_settings()
     ip_list = settings['IP_LIST']
 
     def process_request(self, request, spider):
@@ -123,7 +126,6 @@ class ProxyMiddleware(object):
         request.meta['proxy'] = ip
 
 
-from selenium import webdriver
 from scrapy.http import HtmlResponse
 import time
 import logging
@@ -134,7 +136,7 @@ class JSPageMiddleware(object):
     def process_request(self, request, spider):
         print spider.name + 'load JSPageMiddleware process_request'
 
-        if spider.name =="chacha":
+        if spider.name =="chaxun":
 
             if spider.isHyperlink(request.url):
                 if spider.needLogin:

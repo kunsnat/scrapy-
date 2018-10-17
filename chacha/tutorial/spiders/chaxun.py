@@ -4,9 +4,12 @@ from selenium import webdriver
 from pydispatch import dispatcher
 from scrapy import signals
 
+from scrapy.cmdline import execute
+import sys
+import os
+
 from scrapy import Request
 
-from tutorial.items import TutorialItem
 import json
 import urllib
 
@@ -18,20 +21,26 @@ import time
 
 import logging
 
+from chacha.tutorial.items import ChaXunItem
+
 
 class QichaSpider(scrapy.Spider):
-    name = "chacha"
+    name = "chaxun"
     allowed_domains = ["http://www.chacha.top/"]
     start_urls = [
-                # 'https://www.chacha.top/origin?province_code=510000&city_code=510100&query_text=%E5%88%9B%E4%B8%9A&obj_type=4',
-                'https://www.chacha.top/notice?province_code=510000&city_code=510100&query_text=%E5%88%9B%E4%B8%9A&obj_type=4'
+                'https://www.chacha.top/sup?province_code=510000&city_code=510100', # 扶持
+                'https://www.chacha.top/notice?province_code=510000&city_code=510100&obj_type=7', #  公示
+                'https://www.chacha.top/notice?province_code=510000&city_code=510100&obj_type=4',  # 申报'
+                'https://www.chacha.top/origin?province_code=510000&city_code=510100&obj_type=1', # 指导性文件'
+                'https://www.chacha.top/origin?province_code=510000&city_code=510100&obj_type=2', # 扶持政策'
+                'https://www.chacha.top/origin?province_code=510000&city_code=510100&obj_type=3' # 实施细则'
                 ]
 
-
-    def __init__(self):
+    def __init__(self, index=None, *args, **kwargs):
         self.browser = webdriver.Chrome(executable_path="C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe")
         self.browser.implicitly_wait(10)
         self.len = {}
+        self.index = int(index)
 
         self.hyperBrowser = webdriver.Chrome(executable_path="C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe")
         self.hyperBrowser.implicitly_wait(10)
@@ -43,22 +52,80 @@ class QichaSpider(scrapy.Spider):
 
         currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
         self.location = 'D:/pydemo/qichacha/chacha/download/' + currentDayFile + '/'
+        if os.path.exists(self.location):
+            pass
+        else:
+            os.makedirs(self.location)
+
+        self.areacode = 'D:/pydemo/qichacha/chacha/download/areacode/'
+
         # os.path.abspath(os.path.join(os.getcwd(), "../.."))
         # self.location = os.path.abspath(os.path.join(os.getcwd(), "../.."))  + '/download/' + currentDayFile + '/'
 
         super(QichaSpider, self).__init__()
 
-        dispatcher.connect(self.spider_closed,signals.spider_closed)
+        dispatcher.connect(self.spider_closed, signals.spider_closed)
 
 
+    def getSaveName(self, discode):
+        name = self.codeName[discode]
+        if self.index == 0:
+            name += "_扶持"
+        elif self.index == 1:
+            name += "公示"
+        elif self.index == 2:
+            name += "_申报"
+        elif self.index == 3:
+            name += "_指导性文件"
+        elif self.index == 4:
+            name += "_扶持政策"
+        elif self.index == 5:
+            name += "_实施细则"
+
+        name +=  '.xlsx'
+        return name
 
     def start_requests(self):  # 循环搜索  创建多个地址 以供查询 优先start_urls 两者选一
+        urls = []
+
+        cityCode = self.initCodeName()  # 需要遍历的区县 数组
+
+
+        targetUrl = self.start_urls[self.index]
+        for index, code in enumerate(cityCode):
+            if index == 0:
+                continue
+            value = targetUrl + '&district_code=' + code
+            self.len[value] = 0
+
+            self.saveName = self.getSaveName(code)
+
+            wb = Workbook()
+            ws = wb.active
+            ws.append(['标题', '发文体系', '文号', '序号',
+                       '公示类型', '进度', '类型', '适用地区',
+                       '发文时间', '扶持金额', '有效期限', '适用行业',
+                       '政策分类', '详情', '政策轨迹', '文章地址',
+                       '数据来源'
+                       ])  # 设置表头
+            books = {'wb':'', 'ws':''}
+            books['wb'] = wb
+            books['ws'] = ws
+            self.startUrlIndex[value] = index
+            self.workBookMap[value] = books
+
+            urls.append(value)
+            if index == 1:
+                break
+
+        for url in urls:
+            yield self.make_requests_from_url(url)
+
+    def initCodeName(self):
         # 读取excel 对应district_code区域文件, 拿到相应的code和地址, 然后保存成对应的ws
         # 根据510000 四川, 拿到对四川的 城市,   比如拿到 成都 510100  后续 对应excel 成都区域, 再添加相应的 dis区域编码
-        cityExcel = self.location + '510100.xlsx'
-        provinceExcel = self.location + '510000.xlsx'
-
-        url = 'https://www.chacha.top/search?province_code=510000&city_code=510100'
+        cityExcel = self.areacode + '510100.xlsx'
+        provinceExcel = self.areacode + '510000.xlsx'
 
         # 打开文件
         city = xlrd.open_workbook(cityExcel)
@@ -90,38 +157,9 @@ class QichaSpider(scrapy.Spider):
 
         self.codeName = codeName
 
-        urls = []
-
-        for index, name in enumerate(cityName):
-            if index == 0:
-                continue
-            code = cityCode[index]
-            value = url + '&district_code=' + code
-            self.len[value] = 0
-
-            wb = Workbook()
-            ws = wb.active
-            ws.append(['标题', '发文体系', '文号', '序号',
-                       '公示类型', '进度', '类型', '适用地区',
-                       '发文时间', '扶持金额', '有效期限', '适用行业',
-                       '政策分类', '详情', '政策轨迹', '文章地址',
-                       '数据来源'
-                       ])  # 设置表头
-            books = {'wb':'', 'ws':''}
-            books['wb'] = wb
-            books['ws'] = ws
-
-            self.startUrlIndex[value] = index
-
-            self.workBookMap[value] = books
-
-            urls.append(value)
-            if index == 1:
-                break
+        return cityCode
 
 
-        for url in urls:
-            yield self.make_requests_from_url(url)
 
     def parse(self, response):
         startLen = self.len[response.url]
@@ -177,7 +215,7 @@ class QichaSpider(scrapy.Spider):
             logging.info('parse move on  ----> ' + response.url)
             yield Request(url=response.url,callback=self.parse, dont_filter=True)
         else:
-            logging.info('parse end ----> ' + startLen + '--' + self.len[response.url] + '---' + response.url)
+            logging.info('parse end ----> ' + str(startLen) + '--' + str(self.len[response.url]) + '---' + response.url)
 
 
     def isHyperlink(self, url):
@@ -490,7 +528,7 @@ class QichaSpider(scrapy.Spider):
             return 'sup_item'
 
     def initItem(self):
-        com = TutorialItem()
+        com = ChaXunItem()
         com['title'] = ''
         com['progress'] = ''
         com['type'] = ''
@@ -515,8 +553,16 @@ class QichaSpider(scrapy.Spider):
         return json.dumps(value).decode('unicode_escape')
 
 
-    def spider_closed(self,spider):   #当爬虫退出的时候 关闭chrome
+    def spider_closed(self, spider):   #当爬虫退出的时候 关闭chrome
+
+        # index = self.index + 1    # 根据index 判断urls的数组长度, 再决定是否后续的添加
+        # if index < len(self.start_urls):
+        #     sys.path.append(os.path.dirname(os.path.abspath(__file__)))  # ide调试
+        #     execute(["scrapy","crawl","chacha", "-a", "index=" + str(index)])
+
+
         logging.info('close-------------------------> ' + spider.name)
+
 
 
 

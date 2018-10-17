@@ -9,15 +9,39 @@ import platform
 from chacha.tutorial import logger
 import logging
 
+# 通过CrawlerProcess同时运行几个spider
+from scrapy.crawler import CrawlerProcess
+# 导入获取项目配置的模块
+from scrapy.utils.project import get_project_settings
+# 导入蜘蛛模块(即自己创建的spider)
+from chacha.tutorial.spiders.chaxun import QichaSpider
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))  # ide调试
-execute(["scrapy","crawl","chacha"])
+# sys.path.append(os.path.dirname(os.path.abspath(__file__)))  # ide调试
+# for index in range(5):
+#     execute(["scrapy","crawl","qichaspider", "-a", "index=" + str(index)])
+#     logging.info('current index ---> ' + index)
+#     time.sleep(600)
+
 # execute(["scrapy","crawl","check"])
 # execute(["scrapy","crawl","citys"])
 
 # os.system("scrapy crawl chacha")    # 系统运行 无调试
+
+
+
+
+# get_project_settings() 必须得有，不然"HTTP status code is not handled or not allowed"
+process = CrawlerProcess(get_project_settings())
+# process = CrawlerProcess({
+#     'USER_AGENT': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/22.0.1207.1 Safari/537.1'
+# })
+# process.crawl(QichaSpider, index=1) # 注意引入
+process.crawl(QichaSpider, index=0) # 注意引入
+process.start()
+
 
 # print '----> 路径信息 ' + os.getcwd()
 # print '----> 路径信息 '  + os.path.abspath(os.path.join(os.getcwd(), "../.."))
