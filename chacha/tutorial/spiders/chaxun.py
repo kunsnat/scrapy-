@@ -187,10 +187,7 @@ class QichaSpider(scrapy.Spider):
                 value = self.decodeStr(progress.extract())
                 if value.find('申报已截止') != -1:
                     noEnd = False
-
-            if noEnd == False:
-                logging.info(" refresh data is end in no more to sub ")
-                break
+                    break
 
             href = items.xpath('.//a/@href')
             if len(href) > 0:
@@ -209,7 +206,9 @@ class QichaSpider(scrapy.Spider):
                 else:
                     yield Request(url=hyperUrl,callback=self.parseHyperItem, dont_filter=True)
 
-
+            if noEnd == False:
+                logging.info(" refresh data is end in no more to sub ")
+                break # 中断, 已经截至
 
         if self.len[response.url] > startLen and noEnd: # 继续迭代爬取数据
             logging.info('parse move on  ----> ' + response.url)
