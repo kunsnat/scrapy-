@@ -8,6 +8,11 @@ from scrapy.cmdline import execute
 import sys
 import os
 
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+from twisted.internet import reactor
+
 from scrapy import Request
 
 import json
@@ -41,7 +46,7 @@ class QichaSpider(scrapy.Spider):
         self.browser.implicitly_wait(10)
         self.len = {}
         self.index = int(index)
-
+        logging.info(" index -------> value is : " + str(index))
         self.hyperBrowser = webdriver.Chrome(executable_path="C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe")
         self.hyperBrowser.implicitly_wait(10)
         self.workBookMap = {}
@@ -212,7 +217,7 @@ class QichaSpider(scrapy.Spider):
 
         if self.len[response.url] > startLen and noEnd: # 继续迭代爬取数据
             logging.info('parse move on  ----> ' + response.url)
-            yield Request(url=response.url,callback=self.parse, dont_filter=True)
+            # yield Request(url=response.url,callback=self.parse, dont_filter=True)
         else:
             logging.info('parse end ----> ' + str(startLen) + '--' + str(self.len[response.url]) + '---' + response.url)
 
@@ -558,8 +563,8 @@ class QichaSpider(scrapy.Spider):
         # if index < len(self.start_urls):
         #     sys.path.append(os.path.dirname(os.path.abspath(__file__)))  # ide调试
         #     execute(["scrapy","crawl","chacha", "-a", "index=" + str(index)])
-
-
+        self.browser.close()
+        self.hyperBrowser.close()
         logging.info('close-------------------------> ' + spider.name)
 
 

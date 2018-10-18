@@ -12,6 +12,7 @@ from scrapy.cmdline import execute
 import os
 import sys
 import time
+import logging
 
 class TutorialPipeline(object):
 
@@ -20,6 +21,9 @@ class TutorialPipeline(object):
                 return json.dumps(value).decode('unicode_escape')
 
     def process_item(self, item, spider):
+
+        logging.info(" current pro item ----------->   : " + str(spider.name))
+
         if spider.name =="chaxun":
             row = [
                     item['title'],      item['system'],     item['number'],     item['index'],
