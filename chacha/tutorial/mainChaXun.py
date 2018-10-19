@@ -45,23 +45,24 @@ sys.setdefaultencoding('utf-8')
 
 def orderCitys():
     area = Area()
-    cityIndex = 1  # 1开始 0代表的新津县已经完成.
+    cityIndex = 3  # 2高新西区 1高新区 0代表的新津县已经完成.
     while True:
         value = area.codeList[cityIndex]
         provinceCode = value['provinceCode']
         cityCode = value['cityCode']
         distCode = value['distCode']
         areaCate(provinceCode, cityCode, distCode)
-
         cityIndex += cityIndex
-        if(cityIndex > 10):
+        if(cityIndex >= len(area.codeList)):
             break
 
-# execute(["scrapy","crawl","chaxun",
-#          "-a", "index=" + str(1),
-#          "-a", 'provinceCode=' + str(provinceCode),
-#          "-a", 'cityCode=' + str(cityCode),
-#          "-a", 'distCode=' + str(distCode)])
+        # execute(["scrapy","crawl","chaxun",
+        #          "-a", "index=" + str(0),
+        #          "-a", 'provinceCode=' + str(provinceCode),
+        #          "-a", 'cityCode=' + str(cityCode),
+        #          "-a", 'distCode=' + str(distCode)])
+        # break
+
 
 def areaCate(province, city, dist):
     queryIndex = 0

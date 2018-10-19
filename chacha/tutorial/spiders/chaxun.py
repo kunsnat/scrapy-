@@ -88,6 +88,13 @@ class QichaSpider(scrapy.Spider):
         provinceName = self.codeName[self.provinceCode]
         cityName = self.codeName[self.cityCode]
         name = self.codeName[self.distCode]
+
+        self.filelocation = self.location + provinceName + '/' + cityName + '/' + name + '/'
+        if os.path.exists(self.filelocation):
+            pass
+        else:
+            os.makedirs(self.filelocation)
+
         if self.index == 0:
             name += "_扶持"
         elif self.index == 1:
@@ -100,12 +107,6 @@ class QichaSpider(scrapy.Spider):
             name += "_扶持政策"
         elif self.index == 5:
             name += "_实施细则"
-
-        self.filelocation = self.location + provinceName + '/' + cityName + '/' + name + '/'
-        if os.path.exists(self.filelocation):
-                pass
-        else:
-            os.makedirs(self.filelocation)
 
         return name + '.xlsx'
 
