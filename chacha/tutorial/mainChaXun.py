@@ -52,6 +52,7 @@ def orderCitys():
         cityCode = value['cityCode']
         distCode = value['distCode']
         areaCate(provinceCode, cityCode, distCode)
+        break
         cityIndex += cityIndex
         if(cityIndex >= len(area.codeList)):
             break
