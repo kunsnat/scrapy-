@@ -16,6 +16,7 @@ from scrapy.crawler import CrawlerProcess
 # 导入获取项目配置的模块
 from scrapy.utils.project import get_project_settings
 # 导入蜘蛛模块(即自己创建的spider)
+from chacha.tutorial.areaList import Area
 from chacha.tutorial.spiders.chaxun import QichaSpider
 
 reload(sys)
@@ -42,25 +43,37 @@ sys.setdefaultencoding('utf-8')
 
 
 
-import scrapy.crawler as crawler
-from multiprocessing import Process, Queue
-from twisted.internet import reactor
+def orderCitys():
+    area = Area()
+    cityIndex = 1  # 1开始 0代表的新津县已经完成.
+    while True:
+        value = area.codeList[cityIndex]
+        provinceCode = value['provinceCode']
+        cityCode = value['cityCode']
+        distCode = value['distCode']
+        areaCate(provinceCode, cityCode, distCode)
+
+        cityIndex += cityIndex
+        if(cityIndex > 10):
+            break
+
+# execute(["scrapy","crawl","chaxun",
+#          "-a", "index=" + str(1),
+#          "-a", 'provinceCode=' + str(provinceCode),
+#          "-a", 'cityCode=' + str(cityCode),
+#          "-a", 'distCode=' + str(distCode)])
+
+def areaCate(province, city, dist):
+    queryIndex = 0
+    while True:
+        logging.info(" queryIndex -------> value is : " + str(queryIndex))
+        os.system("scrapy crawl chaxun -a index=%s -a provinceCode=%s -a cityCode=%s -a distCode=%s" %(str(queryIndex),str(province),str(city),str(dist)))    # 顺序执行
+        queryIndex  += 1
+        time.sleep(2)  #  定时间隔,  后续可以加入 区域编码等参数  循环执行.       添加和覆盖 .
+        if queryIndex > 5:
+            break
 
 
-test = 0
 
-while True:
-    logging.info(" test -------> value is : " + str(test))
-    os.system("scrapy crawl chaxun -a index=%s" % test)    # 顺序执行
-    test  += 1
-    time.sleep(2)  #  定时间隔,  后续可以加入 区域编码等参数  循环执行.       添加和覆盖 . 
-    if test > 5:
-        break
-
-
-
-
-
-
-
+orderCitys()
 

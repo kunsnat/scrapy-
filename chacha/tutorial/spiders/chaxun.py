@@ -8,6 +8,8 @@ from scrapy.cmdline import execute
 import sys
 import os
 
+from chacha.tutorial.areaList import Area
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -33,26 +35,33 @@ class QichaSpider(scrapy.Spider):
     name = "chaxun"
     allowed_domains = ["http://www.chacha.top/"]
     start_urls = [
-                'https://www.chacha.top/sup?province_code=510000&city_code=510100', # 扶持
-                'https://www.chacha.top/notice?province_code=510000&city_code=510100&obj_type=7', #  公示
-                'https://www.chacha.top/notice?province_code=510000&city_code=510100&obj_type=4',  # 申报'
-                'https://www.chacha.top/origin?province_code=510000&city_code=510100&obj_type=1', # 指导性文件'
-                'https://www.chacha.top/origin?province_code=510000&city_code=510100&obj_type=2', # 扶持政策'
-                'https://www.chacha.top/origin?province_code=510000&city_code=510100&obj_type=3' # 实施细则'
+                'https://www.chacha.top/sup?tmp=1', # 扶持
+                'https://www.chacha.top/notice?obj_type=7', #  公示
+                'https://www.chacha.top/notice?obj_type=4',  # 申报'
+                'https://www.chacha.top/origin?obj_type=1', # 指导性文件'
+                'https://www.chacha.top/origin?obj_type=2', # 扶持政策'
+                'https://www.chacha.top/origin?obj_type=3' # 实施细则'
                 ]
 
-    def __init__(self, index=None, *args, **kwargs):
+    def __init__(self, index=None, provinceCode=0, cityCode=0, distCode=0, *args, **kwargs):
         self.browser = webdriver.Chrome(executable_path="C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe")
         self.browser.implicitly_wait(10)
-        self.len = {}
         self.index = int(index)
+        self.provinceCode = provinceCode
+        self.cityCode = cityCode
+        self.distCode = distCode
+
         logging.info(" index -------> value is : " + str(index))
+
         self.hyperBrowser = webdriver.Chrome(executable_path="C:/Program Files (x86)/Google/Chrome/Application/chromedriver.exe")
         self.hyperBrowser.implicitly_wait(10)
+
+        self.len = {}
         self.workBookMap = {}
         self.startUrlIndex = {}
         self.hyperIndexMap = {}
         self.fromUrl = {} # 标记最终的item, 来自哪个查询url, 便于分别保存请求.
+
         self.needLogin = True
 
         currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
@@ -64,6 +73,9 @@ class QichaSpider(scrapy.Spider):
 
         self.areacode = 'D:/pydemo/qichacha/chacha/download/areacode/'
 
+        area = Area()
+        self.codeName = area.codeName
+
         # os.path.abspath(os.path.join(os.getcwd(), "../.."))
         # self.location = os.path.abspath(os.path.join(os.getcwd(), "../.."))  + '/download/' + currentDayFile + '/'
 
@@ -72,8 +84,10 @@ class QichaSpider(scrapy.Spider):
         dispatcher.connect(self.spider_closed, signals.spider_closed)
 
 
-    def getSaveName(self, discode):
-        name = self.codeName[discode]
+    def getSaveName(self):
+        provinceName = self.codeName[self.provinceCode]
+        cityName = self.codeName[self.cityCode]
+        name = self.codeName[self.distCode]
         if self.index == 0:
             name += "_扶持"
         elif self.index == 1:
@@ -87,83 +101,45 @@ class QichaSpider(scrapy.Spider):
         elif self.index == 5:
             name += "_实施细则"
 
-        name +=  '.xlsx'
-        return name
+        self.filelocation = self.location + provinceName + '/' + cityName + '/' + name + '/'
+        if os.path.exists(self.filelocation):
+                pass
+        else:
+            os.makedirs(self.filelocation)
+
+        return name + '.xlsx'
 
     def start_requests(self):  # 循环搜索  创建多个地址 以供查询 优先start_urls 两者选一
-        urls = []
-
-        cityCode = self.initCodeName()  # 需要遍历的区县 数组
-
-
         targetUrl = self.start_urls[self.index]
-        for index, code in enumerate(cityCode):
-            if index == 0:
-                continue
-            value = targetUrl + '&district_code=' + code
-            self.len[value] = 0
+        value = targetUrl + '&district_code=' + self.distCode +'&province_code=' + self.provinceCode + '&city_code=' + self.cityCode
+        self.len[value] = 0
 
-            self.saveName = self.getSaveName(code)
+        self.saveName = self.getSaveName()
 
-            wb = Workbook()
-            ws = wb.active
-            ws.append(['标题', '发文体系', '文号', '序号',
-                       '公示类型', '进度', '类型', '适用地区',
-                       '发文时间', '扶持金额', '有效期限', '适用行业',
-                       '政策分类', '详情', '政策轨迹', '文章地址',
-                       '数据来源'
-                       ])  # 设置表头
-            books = {'wb':'', 'ws':''}
-            books['wb'] = wb
-            books['ws'] = ws
-            self.startUrlIndex[value] = index
-            self.workBookMap[value] = books
+        wb = Workbook()
+        ws = wb.active
+        ws.append(['标题', '发文体系', '文号', '序号',
+                   '公示类型', '进度', '类型', '适用地区',
+                   '发文时间', '扶持金额', '有效期限', '适用行业',
+                   '政策分类', '详情', '政策轨迹', '文章地址',
+                   '数据来源'
+                   ])  # 设置表头
+        books = {'wb':'', 'ws':''}
+        books['wb'] = wb
+        books['ws'] = ws
+        self.startUrlIndex[value] = self.index
+        self.workBookMap[value] = books
 
-            urls.append(value)
-            if index == 1:
-                break
+        yield self.make_requests_from_url(value)
 
-        for url in urls:
-            yield self.make_requests_from_url(url)
+    def getFileLocation(self, title):
+        location = self.filelocation + 'files/' + title + '/' # 附件对应地址
+        if os.path.exists(location):
+            pass
+        else:
+            os.makedirs(location)
 
-    def initCodeName(self):
-        # 读取excel 对应district_code区域文件, 拿到相应的code和地址, 然后保存成对应的ws
-        # 根据510000 四川, 拿到对四川的 城市,   比如拿到 成都 510100  后续 对应excel 成都区域, 再添加相应的 dis区域编码
-        cityExcel = self.areacode + '510100.xlsx'
-        provinceExcel = self.areacode + '510000.xlsx'
-
-        # 打开文件
-        city = xlrd.open_workbook(cityExcel)
-        province = xlrd.open_workbook(provinceExcel)
-
-        # 根据sheet索引或者名称获取sheet内容
-        citySheet = city.sheet_by_index(0) # sheet索引从0开始
-        provinceSheet = province.sheet_by_index(0)
-
-        # 获取整行和整列的值（数组）
-        codeName = {}
-
-        cityName= citySheet.col_values(1)
-        cityCode = citySheet.col_values(4)
-
-        provinceName = provinceSheet.col_values(1)
-        provinceCode = citySheet.col_values(4)
-        for index, name in enumerate(provinceName):
-            if index == 0:
-                continue
-            code = provinceCode[index]
-            codeName[code] = name
-
-        for index, name in enumerate(cityName):
-            if index == 0:
-                continue
-            code = cityCode[index]
-            codeName[code] = name
-
-        self.codeName = codeName
-
-        return cityCode
-
+        return location
 
 
     def parse(self, response):
@@ -217,7 +193,7 @@ class QichaSpider(scrapy.Spider):
 
         if self.len[response.url] > startLen and noEnd: # 继续迭代爬取数据
             logging.info('parse move on  ----> ' + response.url)
-            # yield Request(url=response.url,callback=self.parse, dont_filter=True)
+            yield Request(url=response.url,callback=self.parse, dont_filter=True)
         else:
             logging.info('parse end ----> ' + str(startLen) + '--' + str(self.len[response.url]) + '---' + response.url)
 
@@ -300,11 +276,7 @@ class QichaSpider(scrapy.Spider):
                     content = left.xpath('.//div[@class="detail-content"]').extract()
                     com['content'] = self.decodeStr(content).rstrip().lstrip()
                 elif value.find('资料下载') != -1:
-                    location = self.location + 'files/' + title + '/' # 附件对应地址
-                    if os.path.exists(location):
-                        pass
-                    else:
-                        os.makedirs(location)
+                    location = self.getFileLocation(title)
 
                     urls = left.xpath('.//li[@class="ev-download m-b-sm"]')
                     for url in urls:
@@ -398,12 +370,7 @@ class QichaSpider(scrapy.Spider):
                     content = left.xpath('.//div[@class="detail-content"]').extract()
                     com['content'] = self.decodeStr(content).rstrip().lstrip()
                 elif value.find('资料下载') != -1:
-                    location = self.location + 'files/' + title + '/' # 附件对应地址
-                    if os.path.exists(location):
-                        pass
-                    else:
-                        os.makedirs(location)
-
+                    location = self.getFileLocation(title)
                     urls = left.xpath('.//li[@class="ev-download m-b-sm"]')
                     for url in urls:
                         fileUrl = 'http:' + str(url.xpath('@data-href')[0].extract())
@@ -486,12 +453,7 @@ class QichaSpider(scrapy.Spider):
                     content = left.xpath('.//div[@class="detail-content"]').extract()
                     com['content'] = self.decodeStr(content).rstrip().lstrip()
                 elif value.find('资料下载') != -1:
-                    location = self.location + 'files/' + title + '/' # 附件对应地址
-                    if os.path.exists(location):
-                        pass
-                    else:
-                        os.makedirs(location)
-
+                    location = self.getFileLocation(title)
                     urls = left.xpath('.//li[@class="m-b-sm"]')   #特殊的li
                     for url in urls:
                         value = url.xpath('.//a').xpath('@href')
@@ -513,7 +475,6 @@ class QichaSpider(scrapy.Spider):
                     pass
 
             yield com
-
 
     def getType(self, url):
         if url.find('sup_policy') != -1: #文件  扶持

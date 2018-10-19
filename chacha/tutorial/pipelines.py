@@ -37,7 +37,7 @@ class TutorialPipeline(object):
             value = spider.workBookMap[key]
 
             value['ws'].append(row)  # 需要每个url对应一个 查询结果excel
-            value['wb'].save(spider.location + spider.saveName)
+            value['wb'].save(spider.filelocation + spider.saveName)
 
             return item
 
