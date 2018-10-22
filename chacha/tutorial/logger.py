@@ -13,7 +13,7 @@ class logger:
     # 这里利用了lxml库来解析XML
     root = etree.parse(os.path.join(os.path.dirname(__file__), 'config.xml')).getroot()
     # 读取日志文件保存路径
-    logpath = root.find('logpath').text
+    # logpath = root.find('logpath').text
     logpath = os.getcwd() # 路径强制为当前config.xml的同目录
 
 

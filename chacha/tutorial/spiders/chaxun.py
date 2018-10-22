@@ -112,7 +112,14 @@ class QichaSpider(scrapy.Spider):
 
     def start_requests(self):  # 循环搜索  创建多个地址 以供查询 优先start_urls 两者选一
         targetUrl = self.start_urls[self.index]
-        value = targetUrl + '&district_code=' + self.distCode +'&province_code=' + self.provinceCode + '&city_code=' + self.cityCode
+        value = targetUrl
+        if self.distCode != 0:
+            value += '&district_code=' + self.distCode
+        if self.provinceCode != 0:
+            value += '&province_code=' + self.provinceCode
+        if self.cityCode != 0:
+            value += '&city_code=' + self.cityCode
+
         self.len[value] = 0
 
         self.saveName = self.getSaveName()
@@ -159,8 +166,11 @@ class QichaSpider(scrapy.Spider):
             if index < startLen:
                 continue
 
-            if index % 100 == 0: # 对接item项  检测是否已经在数据库存储 --> TODO
-                logging.info(" to do check need refresh data ----> ")
+            if index % 100 == 0:
+                if self.isInDataBase(items):
+                    noEnd = False
+                    logging.info(" new data has in database ----> ")
+                    break
 
             progressSpan = items.xpath('.//span[@class="policy-label m-l-sm"]')
             if len(progressSpan) == 0: # 某些细则, list样式
@@ -203,13 +213,25 @@ class QichaSpider(scrapy.Spider):
         return self.isHyperAnn(url) or self.isHyperItem(url) or self.isHyperPolicy(url)
 
     def isHyperItem(self, url):
-        return str(url).find('sup_item') != -1 or str(url).find('baidu') != -1
+        return str(url).find('sup_item') != -1
 
     def isHyperAnn(self, url):
         return str(url).find('announce') != -1 or str(url).find('publicity') != -1
 
     def isHyperPolicy(self, url):
         return str(url).find('sup_policy') != -1 or str(url).find('macro_policy') != -1 or str(url).find('imple_regu') != -1
+
+    # 需要获取标题  检测是否在数据库中
+    def isInDataBase(self, items): # font-18 bold m-r-sm
+        titleSpan = items.xpath('.//span[@class="font-20 bold m-r-sm"]/text()')
+        if len(titleSpan) == 0:
+            titleSpan = items.xpath('.//span[@class="font-18 bold m-r-sm"]/text()')
+        for title in titleSpan:
+            value = self.decodeStr(title.extract())
+            if value.find('is in database ') != -1: #  检测是否在数据库中
+                return True
+
+        return False
 
     # 搜索 通知公示项
     # 通知申报 announce
