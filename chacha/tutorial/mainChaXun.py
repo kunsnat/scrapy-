@@ -45,25 +45,33 @@ sys.setdefaultencoding('utf-8')
 
 def orderCitys():
     area = Area()
-    cityIndex = 3  # 2高新西区 1高新区 0代表的新津县已经完成.
+    cityIndex = 5  # 5 大邑县 4 简阳市 3天府新区 2高新西区 1高新区 0代表的新津县已经完成.
     while True:
         value = area.codeList[cityIndex]
         provinceCode = value['provinceCode']
         cityCode = value['cityCode']
         distCode = value['distCode']
         areaCate(provinceCode, cityCode, distCode)
-        break
         cityIndex += cityIndex
         if(cityIndex >= len(area.codeList)):
             break
+        break
 
-        # execute(["scrapy","crawl","chaxun",
-        #          "-a", "index=" + str(0),
-        #          "-a", 'provinceCode=' + str(provinceCode),
-        #          "-a", 'cityCode=' + str(cityCode),
-        #          "-a", 'distCode=' + str(distCode)])
-        # break
+def orderDebugCitys(): # 调试 供断点使用.
+    area = Area()
+    cityIndex = 5
+    while True:
+        value = area.codeList[cityIndex]
+        provinceCode = value['provinceCode']
+        cityCode = value['cityCode']
+        distCode = value['distCode']
 
+        execute(["scrapy","crawl","chaxun",
+                 "-a", "index=" + str(0),
+                 "-a", 'provinceCode=' + str(provinceCode),
+                 "-a", 'cityCode=' + str(cityCode),
+                 "-a", 'distCode=' + str(distCode)])
+        break
 
 def areaCate(province, city, dist):
     queryIndex = 0
@@ -78,4 +86,5 @@ def areaCate(province, city, dist):
 
 
 orderCitys()
+# orderDebugCitys()
 

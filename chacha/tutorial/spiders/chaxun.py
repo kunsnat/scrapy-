@@ -85,9 +85,21 @@ class QichaSpider(scrapy.Spider):
 
 
     def getSaveName(self):
-        provinceName = self.codeName[self.provinceCode]
-        cityName = self.codeName[self.cityCode]
-        name = self.codeName[self.distCode]
+
+        if self.provinceCode == 0:
+            provinceName = '全国'
+        else:
+            provinceName = self.codeName[self.provinceCode]
+
+        if self.cityCode == 0:
+            cityName = provinceName
+        else:
+            cityName = self.codeName[self.cityCode]
+
+        if self.distCode == 0:
+            name = cityName
+        else:
+            name = self.codeName[self.distCode]
 
         self.filelocation = self.location + provinceName + '/' + cityName + '/' + name + '/'
         if os.path.exists(self.filelocation):
@@ -305,8 +317,7 @@ class QichaSpider(scrapy.Spider):
                     for url in urls:
                         fileUrl = 'http:' + str(url.xpath('@data-href')[0].extract())
                         name = location + url.xpath('.//a/text()')[0].extract()
-                        if fileUrl.find('http://') != -1 or fileUrl.find('https://') != -1:
-                            urllib.urlretrieve(fileUrl, filename=name)
+                        self.downFileWithName(fileUrl, name)
                 elif value.find('政策时间轨迹') != -1:
                     content = left.xpath('.//div[@class="detail-content"]').extract()
                     com['policyTrail'] = self.decodeStr(content).rstrip().lstrip()
@@ -398,8 +409,7 @@ class QichaSpider(scrapy.Spider):
                     for url in urls:
                         fileUrl = 'http:' + str(url.xpath('@data-href')[0].extract())
                         name = location + url.xpath('.//a/text()')[0].extract()
-                        if fileUrl.find('http://') != -1 or fileUrl.find('https://') != -1:
-                            urllib.urlretrieve(fileUrl, filename=name)
+                        self.downFileWithName(fileUrl, name)
                 elif value.find('政策时间轨迹') != -1:
                     content = left.xpath('.//div[@class="detail-content"]').extract()
                     com['policyTrail'] = self.decodeStr(content).rstrip().lstrip()
@@ -483,8 +493,7 @@ class QichaSpider(scrapy.Spider):
                         if len(value) > 0:
                             fileUrl = 'http:' + str(value[0].extract())
                             name = location + url.xpath('.//a/text()')[0].extract()
-                            if fileUrl.find('http://') != -1 or fileUrl.find('https://') != -1:
-                                urllib.urlretrieve(fileUrl, filename=name)
+                            self.downFileWithName(fileUrl, name)
                 elif value.find('政策时间轨迹') != -1:
                     content = left.xpath('.//div[@class="detail-content"]').extract()
                     com['policyTrail'] = self.decodeStr(content).rstrip().lstrip()
@@ -498,6 +507,13 @@ class QichaSpider(scrapy.Spider):
                     pass
 
             yield com
+
+    def downFileWithName(self, fileUrl, name):
+        if os.path.exists(name):
+            pass
+        else:
+            if fileUrl.find('http://') != -1 or fileUrl.find('https://') != -1:
+                urllib.urlretrieve(fileUrl, filename=name)
 
     def getType(self, url):
         if url.find('sup_policy') != -1: #文件  扶持
