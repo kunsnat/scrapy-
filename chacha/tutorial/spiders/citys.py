@@ -35,7 +35,8 @@ class CitySpider(scrapy.Spider):
 
         self.workBookMap = {}
 
-        self.location = 'D:/pydemo/qichacha/chacha/download/areacode/'
+        parent = os.path.abspath(os.path.join(os.getcwd(), "..")) # 对应'D:\pydemo\qichacha\chacha
+        self.location = parent + '/download/areacode/'
 
         if os.path.exists(self.location):
             pass

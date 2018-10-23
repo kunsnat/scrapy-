@@ -58,9 +58,6 @@ DOWNLOADER_MIDDLEWARES = {
 }
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
-FILES_STORE = 'D:\\result'
-FILES_URLS_FIELD = 'file_urls'
-FILES_RESULT_FIELD = 'files'
 
 ITEM_PIPELINES = {
    'tutorial.pipelines.TutorialPipeline':1

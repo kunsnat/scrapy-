@@ -45,7 +45,7 @@ sys.setdefaultencoding('utf-8')
 
 def orderCitys():
     area = Area()
-    cityIndex = 5  # 5 大邑县 4 简阳市 3天府新区 2高新西区 1高新区 0代表的新津县已经完成.
+    cityIndex = 6  # 5 大邑县 4 简阳市 3天府新区 2高新西区 1高新区 0代表的新津县已经完成.
     while True:
         value = area.codeList[cityIndex]
         provinceCode = value['provinceCode']

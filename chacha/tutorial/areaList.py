@@ -28,7 +28,8 @@ class Area(object):
         codeName = {}
         codeList = []
 
-        self.areacode = 'D:/pydemo/qichacha/chacha/download/areacode/'
+        parent = os.path.abspath(os.path.join(os.getcwd(), "..")) # 对应'D:\pydemo\qichacha\chacha
+        self.areacode = parent + '/download/areacode/'
 
         chinaExcel = self.areacode + 'china.xlsx'
         if os.path.exists(chinaExcel):

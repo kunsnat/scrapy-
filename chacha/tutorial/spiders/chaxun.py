@@ -65,13 +65,16 @@ class QichaSpider(scrapy.Spider):
         self.needLogin = True
 
         currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
-        self.location = 'D:/pydemo/qichacha/chacha/download/' + currentDayFile + '/'
+
+        parent = os.path.abspath(os.path.join(os.getcwd(), "..")) # 对应'D:\pydemo\qichacha\chacha
+
+        self.location = parent + '/download/' + currentDayFile + '/'
         if os.path.exists(self.location):
             pass
         else:
             os.makedirs(self.location)
 
-        self.areacode = 'D:/pydemo/qichacha/chacha/download/areacode/'
+        self.areacode = parent + '/download/areacode/'
 
         area = Area()
         self.codeName = area.codeName
@@ -152,8 +155,9 @@ class QichaSpider(scrapy.Spider):
 
         yield self.make_requests_from_url(value)
 
-    def getFileLocation(self, title):
-        location = self.filelocation + 'files/' + title + '/' # 附件对应地址
+    def getFileLocation(self, title): # 每个区 重复文件太多.  所以向上一级存储 减少重复文件下载.
+        parent = os.path.abspath(os.path.join(self.filelocation, ".."))
+        location = parent + '/' + 'files/' + title + '/' # 附件对应地址
         if os.path.exists(location):
             pass
         else:
