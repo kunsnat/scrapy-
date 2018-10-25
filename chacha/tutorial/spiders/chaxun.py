@@ -51,13 +51,14 @@ class QichaSpider(scrapy.Spider):
         self.hyperBrowser.implicitly_wait(10)
 
         self.itemLength = 0  # 搜索时 列表中list的长度
-        self.currentUrlIndex = 42 # 当前进行parse的start_urls中的url
+        self.currentUrlIndex = 46 # 当前进行parse的start_urls中的url 42  浦江县开始
 
         self.needLogin = True
         self.urlTarget = {}
 
         self.hyperIndexMap = {}
         self.fromUrl = {} # 标记最终的item, 来自哪个查询url, 便于分别保存请求.
+        self.hasDownFiles = {} # 标记下载地址pdf 防止重复下载
 
         currentDayFile = time.strftime("%Y-%m-%d", time.localtime())
         parent = os.path.abspath(os.path.join(os.getcwd(), "..")) # 对应'D:\pydemo\qichacha\chacha
@@ -244,7 +245,7 @@ class QichaSpider(scrapy.Spider):
             logging.info('parse move on  ----> ' + response.url)
             yield Request(url=response.url,callback=self.parse, dont_filter=True)
         else:
-            time.sleep(20)
+            time.sleep(10)  # sleep 等待前序的一些process Item转换完成
             self.currentUrlIndex += 1
             if self.currentUrlIndex < len(self.startUrlList)  and self.currentUrlIndex < 52:
                 targetUrl = self.getStartUrl()
@@ -543,9 +544,10 @@ class QichaSpider(scrapy.Spider):
             yield com
 
     def downFileWithName(self, fileUrl, name):
-        if os.path.exists(name):
+        if os.path.exists(name) or self.hasDownFiles.has_key(name):
             pass
         else:
+            self.hasDownFiles[name] = 'in'  # 可能的重复下载error
             if fileUrl.find('http://') != -1 or fileUrl.find('https://') != -1:
                 urllib.urlretrieve(fileUrl, filename=name)
 
