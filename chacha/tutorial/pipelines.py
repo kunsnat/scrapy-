@@ -34,10 +34,10 @@ class TutorialPipeline(object):
             ]
 
             key = item['fromUrl']
-            value = spider.workBookMap[key]
+            value = spider.urlTarget[key]
 
             value['ws'].append(row)  # 需要每个url对应一个 查询结果excel
-            value['wb'].save(spider.filelocation + spider.saveName)
+            value['wb'].save(value['filelocation'] + value['saveName'])
 
             return item
 

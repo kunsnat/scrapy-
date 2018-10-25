@@ -158,7 +158,7 @@ class JSPageMiddleware(object):
                 return HtmlResponse(url=spider.hyperBrowser.current_url,body=spider.hyperBrowser.page_source,encoding="utf-8")
 
             else:
-                if spider.len[request.url] == 0:
+                if spider.itemLength == 0:
                     spider.browser.get(request.url)
 
                 logging.info('load main page and down refresh')

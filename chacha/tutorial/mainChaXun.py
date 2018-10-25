@@ -22,7 +22,7 @@ from chacha.tutorial.spiders.chaxun import QichaSpider
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-# execute(["scrapy","crawl","chaxun", "-a", "index=" + str(1)])
+execute(["scrapy","crawl","chaxun"])
 
 # os.system("scrapy crawl chaxun -a index=1")    # 系统运行 无调试
 # os.system("scrapy crawl chaxun -a index=2")    # 顺序执行, 但是没有正常关闭掉浏览器.
@@ -45,7 +45,7 @@ sys.setdefaultencoding('utf-8')
 
 def orderCitys():
     area = Area()
-    cityIndex = 6  # 5 大邑县 4 简阳市 3天府新区 2高新西区 1高新区 0代表的新津县已经完成.
+    cityIndex = 7  # 7 蒲江县 6 金堂县 5 大邑县 4 简阳市 3天府新区 2高新西区 1高新区 0代表的新津县已经完成.
     while True:
         value = area.codeList[cityIndex]
         provinceCode = value['provinceCode']
@@ -85,6 +85,6 @@ def areaCate(province, city, dist):
 
 
 
-orderCitys()
+# orderCitys()
 # orderDebugCitys()
 
