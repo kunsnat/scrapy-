@@ -139,18 +139,18 @@ class JSPageMiddleware(object):
         if spider.name =="chaxun":
 
             if spider.isHyperlink(request.url):
-                if spider.needLogin:
-                    spider.hyperBrowser.get('https://www.chacha.top/')
-                    time.sleep(2) # 预留加载网页时间
-                    spider.needLogin = False
-                    spider.hyperBrowser.find_element_by_xpath('//a[@class="header-login"]').click()
-                    spider.hyperBrowser.find_element_by_xpath('//span[@class="login-tab login-tab-last"]').click()
-
-                    spider.hyperBrowser.find_element_by_xpath('//input[@name="login_phone"]').send_keys("18094202229")
-                    spider.hyperBrowser.find_element_by_xpath('//input[@name="login_password"]').send_keys("1234567890")
-                    spider.hyperBrowser.find_element_by_xpath('//button[@class="btn-control bg-orange text-white login-btn m-t"]').click()
-
-                    time.sleep(5) # find_element_by_xpath 查询有点慢, 需要等待
+                # if spider.needLogin:
+                #     spider.hyperBrowser.get('https://www.chacha.top/')
+                #     time.sleep(2) # 预留加载网页时间
+                #     spider.needLogin = False
+                #     spider.hyperBrowser.find_element_by_xpath('//a[@class="header-login"]').click()
+                #     spider.hyperBrowser.find_element_by_xpath('//span[@class="login-tab login-tab-last"]').click()
+                #
+                #     spider.hyperBrowser.find_element_by_xpath('//input[@name="login_phone"]').send_keys("18094202229")
+                #     spider.hyperBrowser.find_element_by_xpath('//input[@name="login_password"]').send_keys("1234567890")
+                #     spider.hyperBrowser.find_element_by_xpath('//button[@class="btn-control bg-orange text-white login-btn m-t"]').click()
+                #
+                #     time.sleep(5) # find_element_by_xpath 查询有点慢, 需要等待
 
                 spider.hyperBrowser.get(request.url)
                 print 'load hyper'
@@ -166,7 +166,7 @@ class JSPageMiddleware(object):
                 for i in range(1, 80): #
                     spider.browser.find_element_by_xpath("//body").send_keys(Keys.DOWN)
 
-                time.sleep(3)
+                time.sleep(60)
 
                 return HtmlResponse(url=spider.browser.current_url,body=spider.browser.page_source,encoding="utf-8")
 
